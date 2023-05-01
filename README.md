@@ -11,5 +11,6 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 
 | RL Algorithm | Description |
 | --- | --- |
-| `Deep Q Learing` | List all *new or modified* files |
-| `Policy Gradient` | Show file differences that **haven't been** staged |
+| `Deep Q Learing` | WORKS |
+| `Policy Gradient` | WORKS |
+| `Actor Critic (A2C)` | ALMOSTR WORKS |
