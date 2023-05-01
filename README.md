@@ -13,4 +13,4 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 | --- | --- |
 | `Deep Q Learing` | WORKS |
 | `Policy Gradient` | WORKS |
-| `Actor Critic (A2C)` | ALMOSTR WORKS |
+| `Actor Critic (A2C)` | ALMOST WORKS |
