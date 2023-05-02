@@ -1,7 +1,6 @@
 <div align="center">
 ![synapse 2](https://user-images.githubusercontent.com/56114938/235324384-6612eaf7-fda9-40d8-b366-d9d9d66920b0.png)
-<div>
-
+  
 # Synapse Reinforcement Learning
 
 Synapse is a framework for implementing Reinforcement Learning (RL) algorithms in PyTorch. The repository includes popular algorithms such as Deep Q-Networks, Policy Gradients, and Actor-Critic, as well as others.
