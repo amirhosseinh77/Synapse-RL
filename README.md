@@ -1,7 +1,7 @@
 <div align="center">
   <p>
     <a align="center" href="https://github.com/amirhosseinh77/Synapse-RL">
-      <img width="100%" src="https://user-images.githubusercontent.com/56114938/235324384-6612eaf7-fda9-40d8-b366-d9d9d66920b0.png"></a>
+      <img width="50%" src="https://user-images.githubusercontent.com/56114938/235324384-6612eaf7-fda9-40d8-b366-d9d9d66920b0.png"></a>
   </p>
 </div>
   
