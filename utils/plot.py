@@ -1,27 +1,19 @@
-import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from IPython import display
 
-def plot_return(returns, show_result=False):
-    plt.figure(1)
-    durations_t = returns
-    if show_result:
-        plt.title('Result')
-    else:
-        plt.clf()
-        plt.title('Training...')
+def plot_return(returns, window=10):
+    display.clear_output(wait=True)
+    plt.title('Score/Episode Plot')
+
+    rolling_mean = pd.Series(returns).rolling(window).mean()
+    std = pd.Series(returns).rolling(window).std()
+
+    plt.plot(returns)
+    plt.plot(rolling_mean)
+    plt.fill_between(range(len(returns)),rolling_mean-std, rolling_mean+std, color='violet', alpha=0.2)
+    plt.grid()
     plt.xlabel('Episode')
-    plt.ylabel('Duration')
-    plt.plot(durations_t.numpy())
-    # Take 100 episode averages and plot them too
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-        means = torch.cat((torch.zeros(99), means))
-        plt.plot(means.numpy())
-
-    plt.pause(0.001)  # pause a bit so that plots are updated
-    if is_ipython:
-        if not show_result:
-            display.display(plt.gcf())
-            display.clear_output(wait=True)
-        else:
-            display.display(plt.gcf())
+    plt.ylabel('Score')
+    plt.legend(['Score', 'Rolling Mean'])
+    plt.pause(0.001)
