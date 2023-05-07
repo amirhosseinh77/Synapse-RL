@@ -1,20 +1,10 @@
-import gym
-import random
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-from collections import deque
-import copy
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
+from utils.plot import plot_return
 
-is_ipython = 'inline' in matplotlib.get_backend()
-if is_ipython:
-    from IPython import display
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class Actor(nn.Module):
     def __init__(self, state_dim, hidden_dim, action_dim):
@@ -40,33 +30,37 @@ class Critic(nn.Module):
 
 class ActorCriticAgent():
     def __init__(self, state_size, action_size, lr=0.01, hidden_dim=128):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(self.device)
         self.memory = []
-        self.actor =  Actor(state_size, hidden_dim, action_size).to(device)
-        self.critic = Critic(state_size, hidden_dim).to(device)
+        self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
+        self.critic = Critic(state_size, hidden_dim).to(self.device)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=0.1*lr)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr)
 
+
     def select_action(self, state):
-        state = torch.tensor(state).to(device)
+        state = torch.tensor(state).to(self.device)
         probs = self.actor(state)
         dist = torch.distributions.Categorical(probs)
         action = dist.sample()
         return action.item(), dist.log_prob(action)
 
+
     def push_memory(self, state, action_log_prob, reward, next_state, done):
         new_experience = [state, action_log_prob, reward, next_state, done]
         self.memory.append(new_experience)
 
+
     def learn(self, gamma=0.99):
         states, action_log_probs, rewards, next_states, dones = zip(*self.memory)
 
-        state_tensor = torch.tensor(states).to(device)
-        next_state_tensor = torch.tensor(next_states).to(device)
-        action_log_probs = torch.stack(action_log_probs).unsqueeze(-1).to(device)
-        rewards = torch.tensor(rewards).unsqueeze(-1).to(device)
-        dones = torch.tensor(dones).unsqueeze(-1).to(device)
+        state_tensor = torch.tensor(np.array(states)).to(self.device)
+        next_state_tensor = torch.tensor(np.array(next_states)).to(self.device)
+        action_log_probs = torch.stack(action_log_probs).unsqueeze(-1).to(self.device)
+        rewards = torch.tensor(rewards).unsqueeze(-1).to(self.device)
+        dones = torch.tensor(dones).unsqueeze(-1).to(self.device)
         
-        # print(state_tensor.shape, next_state_tensor.shape, action_log_probs.shape, rewards.shape, dones.shape)
         states_val = self.critic(state_tensor)
         next_states_val = self.critic(next_state_tensor)
 
@@ -80,36 +74,23 @@ class ActorCriticAgent():
         critic_loss.backward()
         self.actor_optimizer.step()
         self.critic_optimizer.step()  
-
         self.memory = []
-        
-
-# Initialize the CartPole environment and agent
-env = gym.make('CartPole-v1')
-state_size = env.observation_space.shape[0]
-action_size = env.action_space.n
-agent = ActorCriticAgent(state_size, action_size)
 
 
-# Run the Actor Critic algorithm
-episodes = 20000
-returns = []
-for episode in range(episodes):
-    state = env.reset()
-    score = 0
-    done = False
-    while not done:
-        action, action_log_prob = agent.select_action(state)
-        next_state, reward, done, info = env.step(action)
-        agent.push_memory(state, action_log_prob, reward, next_state, done)
-        score += reward
-        state = next_state
-    
-    agent.learn()
-
-    returns.append(score)
-    plot_return(returns)
-    # print("Episode: {}, Score: {:.2f}, Epsilon: {:.2f}".format(episode, score, agent.epsilon))
-
-env.close()
-plot_return(returns, show_result = True)
+    def train(self, env, state_size, action_size, episodes):
+        returns = []
+        for episode in range(episodes):
+            state = env.reset()
+            score = 0
+            done = False
+            while not done:
+                action, action_log_prob = self.select_action(state)
+                next_state, reward, done, info = env.step(action)
+                self.push_memory(state, action_log_prob, reward, next_state, done)
+                score += reward
+                state = next_state
+            self.learn()
+            returns.append(score)
+            plot_return(returns, 'Actor Critic')
+        env.close()
+        return returns
