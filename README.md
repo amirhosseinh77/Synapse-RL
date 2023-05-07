@@ -14,6 +14,6 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 
 | RL Algorithm | Description |
 | --- | --- |
-| `Deep Q Learing` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com)|
-| `Policy Gradient` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com)|
-| `Actor Critic (A2C)` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.comg) |
+| `Deep Q Learing` | [![Open In Colab](https://colab.research.google.com/drive/1WuV4xRMoEOFizDK3YzIaqrr9kgCP8lxH?usp=sharing)|
+| `Policy Gradient` | [![Open In Colab](https://colab.research.google.com/drive/1hvCK3DNneskJiPYgJ6njRO5JZoC1QNNA?usp=sharing)|
+| `Actor Critic (A2C)` | [![Open In Colab](https://colab.research.google.com/drive/1tElEZmv4qIjLeSJIES5duQU3DBKqIZje?usp=sharing) |
