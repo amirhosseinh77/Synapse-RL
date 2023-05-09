@@ -34,9 +34,9 @@ class ActorCriticAgent():
         self.memory = []
         self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
         self.critic = Critic(state_size, hidden_dim).to(self.device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr, weight_decay=1e-2)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr, weight_decay=1e-2)
-
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr)
+        self.max_gradient_norm = 0.5
 
     def select_action(self, state):
         state = torch.tensor(state).to(self.device)
@@ -71,6 +71,11 @@ class ActorCriticAgent():
         self.critic_optimizer.zero_grad()
         actor_loss.backward()
         critic_loss.backward()
+
+        # gradients clipping
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.max_gradient_norm)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.max_gradient_norm)
+
         self.actor_optimizer.step()
         self.critic_optimizer.step()  
         self.memory = []
