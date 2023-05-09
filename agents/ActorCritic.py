@@ -34,8 +34,8 @@ class ActorCriticAgent():
         self.memory = []
         self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
         self.critic = Critic(state_size, hidden_dim).to(self.device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr, weight_decay=1e-4)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr, weight_decay=1e-4)
         self.max_gradient_norm = 0.5
 
     def select_action(self, state):
@@ -81,7 +81,7 @@ class ActorCriticAgent():
         self.memory = []
 
 
-    def train(self, env, state_size, action_size, episodes):
+    def train(self, env, episodes):
         returns = []
         for episode in range(episodes):
             score = 0
