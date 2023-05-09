@@ -8,7 +8,7 @@ plt.rc('font', size=10)
 def plot_return(returns, agent, window=100):
     display.clear_output(wait=True)
     plt.figure(figsize=(8,4))
-    plt.title(f'SYNAPS : {agent}')
+    plt.title(f'SYNAPSE : {agent}')
 
     rolling_mean = pd.Series(returns).rolling(window).mean()
     std = pd.Series(returns).rolling(window).std()

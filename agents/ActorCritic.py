@@ -29,14 +29,13 @@ class Critic(nn.Module):
         return value
 
 class ActorCriticAgent():
-    def __init__(self, state_size, action_size, lr=0.01, hidden_dim=128):
+    def __init__(self, state_size, action_size, lr=1e-2, hidden_dim=128):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(self.device)
         self.memory = []
         self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
         self.critic = Critic(state_size, hidden_dim).to(self.device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=0.1*lr)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr, weight_decay=1e-2)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr, weight_decay=1e-2)
 
 
     def select_action(self, state):
@@ -65,7 +64,7 @@ class ActorCriticAgent():
         next_states_val = self.critic(next_state_tensor)
 
         advantages = rewards + gamma * next_states_val * torch.logical_not(dones) - states_val
-        actor_loss = -(action_log_probs * advantages.detach()).sum()
+        actor_loss = (-action_log_probs * advantages.detach()).sum()
         critic_loss = F.mse_loss(rewards + gamma * next_states_val * torch.logical_not(dones), states_val)
 
         self.actor_optimizer.zero_grad()
@@ -80,9 +79,9 @@ class ActorCriticAgent():
     def train(self, env, state_size, action_size, episodes):
         returns = []
         for episode in range(episodes):
-            state = env.reset()
             score = 0
             done = False
+            state = env.reset()
             while not done:
                 action, action_log_prob = self.select_action(state)
                 next_state, reward, done, info = env.step(action)
@@ -91,6 +90,6 @@ class ActorCriticAgent():
                 state = next_state
             self.learn()
             returns.append(score)
-            plot_return(returns, 'Actor Critic')
+            plot_return(returns, f'Actor Critic ({self.device})')
         env.close()
         return returns
