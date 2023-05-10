@@ -28,6 +28,7 @@ class Critic(nn.Module):
         value = self.fc2(x)
         return value
 
+
 class ActorCriticAgent():
     def __init__(self, state_size, action_size, lr=1e-2, hidden_dim=128):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -45,11 +46,9 @@ class ActorCriticAgent():
         action = dist.sample()
         return action.item(), dist.log_prob(action)
 
-
     def push_memory(self, state, action_log_prob, reward, next_state, done):
         new_experience = [state, action_log_prob, reward, next_state, done]
         self.memory.append(new_experience)
-
 
     def learn(self, gamma=0.99):
         states, action_log_probs, rewards, next_states, dones = zip(*self.memory)
@@ -79,7 +78,6 @@ class ActorCriticAgent():
         self.actor_optimizer.step()
         self.critic_optimizer.step()  
         self.memory = []
-
 
     def train(self, env, episodes):
         returns = []
