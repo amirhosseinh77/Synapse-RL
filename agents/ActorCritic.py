@@ -35,7 +35,7 @@ class ActorCriticAgent():
         self.memory = []
         self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
         self.critic = Critic(state_size, hidden_dim).to(self.device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr, weight_decay=1e-4)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr/2, weight_decay=1e-4)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr, weight_decay=1e-4)
         self.max_gradient_norm = 0.5
 
