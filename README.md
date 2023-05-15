@@ -11,11 +11,14 @@ Synapse is a framework for implementing Reinforcement Learning (RL) algorithms i
 
 One of the advantages of using Synapse-RL is its compatibility with gym-based environments. Gym provides a standard interface for working with environments to benchmark RL models. Synapse-RL also includes various utility functions and classes that make it easy to experiment with different hyperparameters, test different training approaches, and visualize training results.
 
+### Colab
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/amirhosseinh77/Synapse-RL/blob/main/SYNAPES_tutorial.ipynb)
+
 
 | RL Algorithm | Description |
 | --- | --- |
-| `Deep Q Learing` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1WuV4xRMoEOFizDK3YzIaqrr9kgCP8lxH?usp=sharing)|
-| `Policy Gradient` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hvCK3DNneskJiPYgJ6njRO5JZoC1QNNA?usp=sharing)|
-| `Actor Critic (A2C)` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1TdO5WtHDK45FncuOl1YMpX0ADPZKtPb2?usp=sharing)|
-| `DDGP` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/)|
+| `Deep Q Learing` | |
+| `Policy Gradient` | Discrete |
+| `Actor Critic (A2C)` | Discrete |
+| `DDGP` | Continuous |
 
