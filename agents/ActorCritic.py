@@ -30,12 +30,12 @@ class Critic(nn.Module):
 
 
 class ActorCriticAgent():
-    def __init__(self, state_size, action_size, lr=1e-2, hidden_dim=128):
+    def __init__(self, state_size, action_size, lr=1e-3, hidden_dim=128):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.memory = []
         self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
         self.critic = Critic(state_size, hidden_dim).to(self.device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr/2, weight_decay=1e-4)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr, weight_decay=1e-4)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr, weight_decay=1e-4)
         self.max_gradient_norm = 0.5
 
@@ -64,7 +64,7 @@ class ActorCriticAgent():
 
         advantages = rewards + gamma * next_states_val * torch.logical_not(dones) - states_val
         actor_loss = (-action_log_probs * advantages.detach()).sum()
-        critic_loss = F.mse_loss(rewards + gamma * next_states_val * torch.logical_not(dones), states_val)
+        critic_loss = (advantages**2).mean()
 
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
@@ -72,8 +72,8 @@ class ActorCriticAgent():
         critic_loss.backward()
 
         # gradients clipping
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.max_gradient_norm)
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.max_gradient_norm)
+        # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.max_gradient_norm)
+        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.max_gradient_norm)
 
         self.actor_optimizer.step()
         self.critic_optimizer.step()  
