@@ -14,7 +14,7 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 ### Colab
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/amirhosseinh77/Synapse-RL/blob/main/SYNAPES_tutorial.ipynb)
 
-
+### Algorithms
 | RL Algorithm | Description |
 | --- | --- |
 | `Deep Q Learing` | |
