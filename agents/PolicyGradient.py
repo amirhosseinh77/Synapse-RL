@@ -52,7 +52,7 @@ class PolicyGradientAgent():
         policy_loss.backward()
 
         # gradients clipping
-        torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.max_gradient_norm)
+        # torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.max_gradient_norm)
 
         self.optimizer.step()
         self.memory = []
