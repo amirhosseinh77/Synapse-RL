@@ -19,7 +19,7 @@ class PolicyNetwork(nn.Module):
 
 
 class PolicyGradientAgent():
-    def __init__(self, state_size, action_size, lr=1e-2, hidden_dim=128):
+    def __init__(self, state_size, action_size, lr=1e-3, hidden_dim=128):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.memory = []
         self.policy_network = PolicyNetwork(state_size, hidden_dim, action_size).to(self.device)
