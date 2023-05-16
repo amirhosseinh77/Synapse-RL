@@ -17,7 +17,7 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 ### Supported Algorithms
 | RL Algorithm | Description |
 | --- | --- |
-| `Deep Q Learing` | | Discrete |
+| `Deep Q Learing` | Discrete |
 | `Policy Gradient` | Discrete |
 | `Actor Critic (A2C)` | Discrete |
 | `DDGP` | Continuous |
