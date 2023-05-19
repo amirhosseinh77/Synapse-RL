@@ -3,16 +3,17 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import copy
+import random
 import numpy as np
 from collections import deque
 from utils.plot import plot_return
 
 # Define the Q-Network architecture
 class QNetwork(nn.Module):
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, hidden_dim):
         super().__init__()
-        self.fc1 = nn.Linear(state_size, 256)
-        self.fc2 = nn.Linear(256, action_size)
+        self.fc1 = nn.Linear(state_size, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, action_size)
 
     def forward(self, state):
         x = F.relu(self.fc1(state))
@@ -38,7 +39,8 @@ class ReplayBuffer():
 
 # Define the Deep Q-Learning agent
 class DQNAgent():
-    def __init__(self, state_size, action_size, gamma=0.99, epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.998, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
+    def __init__(self, state_size, action_size, hidden_dim=128, gamma=0.99, epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.998, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
@@ -49,7 +51,7 @@ class DQNAgent():
         self.tau = tau
         self.batch_size = batch_size
         self.memory = ReplayBuffer(buffer_size)
-        self.q_network = QNetwork(state_size, action_size)
+        self.q_network = QNetwork(state_size, action_size, hidden_dim)
         self.target_network = copy.deepcopy(self.q_network)
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
 
