@@ -30,7 +30,7 @@ class Critic(nn.Module):
 
 
 class ActorCriticAgent():
-    def __init__(self, state_size, action_size, , hidden_dim=128, lr=1e-3):
+    def __init__(self, state_size, action_size, hidden_dim=128, lr=1e-3):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.memory = []
         self.actor =  Actor(state_size, hidden_dim, action_size).to(self.device)
