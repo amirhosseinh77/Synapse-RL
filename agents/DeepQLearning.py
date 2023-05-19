@@ -105,9 +105,9 @@ class DQNAgent():
             done = False
             state = env.reset()
             while not done:
-                action, action_log_prob = self.select_action(state)
+                action = self.select_action(state)
                 next_state, reward, done, info = env.step(action)
-                self.memory.push(state, action, reward, next_state, done)
+                self.memory.push_memory(state, action, reward, next_state, done)
                 self.learn()
                 score += reward
                 state = next_state
