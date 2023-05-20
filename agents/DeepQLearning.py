@@ -39,7 +39,7 @@ class ReplayBuffer():
 
 # Define the Deep Q-Learning agent
 class DQNAgent():
-    def __init__(self, state_size, action_size, hidden_dim=128, gamma=0.99, epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.998, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
+    def __init__(self, state_size, action_size, hidden_dim=64, gamma=0.99, epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.998, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.state_size = state_size
         self.action_size = action_size
