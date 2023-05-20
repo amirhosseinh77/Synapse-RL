@@ -82,7 +82,7 @@ class DQNAgent():
         # Compute Q-Learning loss and update the network parameters
         q_values = self.q_network(states)
         action_q_values = torch.gather(q_values, 1, actions)
-        loss = F.mse_loss(action_q_values, targets)
+        loss = F.mse_loss(action_q_values, targets.detach())
         
         self.optimizer.zero_grad()
         loss.backward()
