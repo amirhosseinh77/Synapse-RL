@@ -53,7 +53,7 @@ class DQNAgent():
         self.memory = ReplayBuffer(buffer_size)
         self.q_network = QNetwork(state_size, action_size, hidden_dim)
         self.target_network = copy.deepcopy(self.q_network)
-        self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr, weight_decay=1e-4)
 
     def select_action(self, state):
         if np.random.rand() <= self.epsilon:
@@ -75,7 +75,7 @@ class DQNAgent():
         dones = torch.tensor(dones, dtype=torch.uint8).unsqueeze(-1)
         
         # Compute Q-Learning targets
-        q_values_next = self.target_network(next_states).detach()
+        q_values_next = self.target_network(next_states)
         max_q_values_next = torch.max(q_values_next, dim=1)[0].unsqueeze(-1)
         targets = rewards + (self.gamma * max_q_values_next * torch.logical_not(dones))
         
