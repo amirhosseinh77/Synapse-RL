@@ -52,8 +52,8 @@ class DQNAgent():
         self.batch_size = batch_size
         self.memory = ReplayBuffer(buffer_size)
         self.q_network = QNetwork(state_size, action_size, hidden_dim)
-        self.target_network = copy.deepcopy(self.q_network)
-        self.target_network.eval()
+        self.target_network = QNetwork(state_size, action_size, hidden_dim)
+        self.target_network.load_state_dict(self.q_network.state_dict())
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr, weight_decay=1e-4)
 
     def select_action(self, state):
@@ -91,11 +91,8 @@ class DQNAgent():
         
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′
-        target_net_state_dict = self.target_network.state_dict()
-        q_net_state_dict = self.q_network.state_dict()
-        for key in q_net_state_dict:
-            target_net_state_dict[key] = q_net_state_dict[key]*self.tau + target_net_state_dict[key]*(1-self.tau)
-        self.target_network.load_state_dict(target_net_state_dict)
+        for target_param, param in zip(self.target_network.parameters(), self.q_network.parameters()):
+            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
         # Decay epsilon
         if self.epsilon > self.epsilon_min:
