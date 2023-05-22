@@ -59,7 +59,7 @@ class DQNAgent():
     def select_action(self, state):
         if np.random.rand() <= self.epsilon:
             return np.random.choice(self.action_size)
-        q_values = self.q_network(torch.tensor(state).to(self.device))
+        q_values = self.q_network(torch.tensor(state, dtype=torch.float32).to(self.device))
         return torch.argmax(q_values).item()
 
     def learn(self):
@@ -69,11 +69,11 @@ class DQNAgent():
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
-        states = torch.tensor(states).to(self.device)
-        actions = torch.tensor(actions).unsqueeze(-1).to(self.device)
-        rewards = torch.tensor(rewards).unsqueeze(-1).to(self.device)
-        next_states = torch.tensor(next_states).to(self.device)
-        dones = torch.tensor(dones).unsqueeze(-1).to(self.device)
+        states = torch.tensor(states, dtype=torch.float32).to(self.device)
+        actions = torch.tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
+        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1).to(self.device)
+        next_states = torch.tensor(next_states, dtype=torch.float32).to(self.device)
+        dones = torch.tensor(dones, dtype=torch.uint8).unsqueeze(-1).to(self.device)
         
         # Compute Q-Learning targets
         q_values_next = self.target_network(next_states)
