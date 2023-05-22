@@ -51,15 +51,15 @@ class DQNAgent():
         self.tau = tau
         self.batch_size = batch_size
         self.memory = ReplayBuffer(buffer_size)
-        self.q_network = QNetwork(state_size, action_size, hidden_dim)
-        self.target_network = QNetwork(state_size, action_size, hidden_dim)
+        self.q_network = QNetwork(state_size, action_size, hidden_dim).to(self.device)
+        self.target_network = QNetwork(state_size, action_size, hidden_dim).to(self.device)
         self.target_network.load_state_dict(self.q_network.state_dict())
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr, weight_decay=1e-4)
 
     def select_action(self, state):
         if np.random.rand() <= self.epsilon:
             return np.random.choice(self.action_size)
-        q_values = self.q_network(torch.tensor(state, dtype=torch.float32))
+        q_values = self.q_network(torch.tensor(state).to(self.device))
         return torch.argmax(q_values).item()
 
     def learn(self):
@@ -69,11 +69,11 @@ class DQNAgent():
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
-        states = torch.tensor(states, dtype=torch.float32)
-        actions = torch.tensor(actions, dtype=torch.int64).unsqueeze(-1)
-        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1)
-        next_states = torch.tensor(next_states, dtype=torch.float32)
-        dones = torch.tensor(dones, dtype=torch.uint8).unsqueeze(-1)
+        states = torch.tensor(states).to(self.device)
+        actions = torch.tensor(actions).unsqueeze(-1).to(self.device)
+        rewards = torch.tensor(rewards).unsqueeze(-1).to(self.device)
+        next_states = torch.tensor(next_states).to(self.device)
+        dones = torch.tensor(dones).unsqueeze(-1).to(self.device)
         
         # Compute Q-Learning targets
         q_values_next = self.target_network(next_states)
