@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import copy
 import random
 import numpy as np
 from collections import deque
 from utils.plot import plot_return
+
 
 # Define the Q-Network architecture
 class QNetwork(nn.Module):
