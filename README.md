@@ -22,3 +22,16 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 | `Actor Critic (A2C)` | Discrete |
 | `DDGP` | Continuous |
 
+### Inference
+```python
+import gym
+from agents.PolicyGradient import PolicyGradientAgent
+
+# Initialize the CartPole environment and agent
+env = gym.make('CartPole-v1')
+state_size = env.observation_space.shape[0]
+action_size = env.action_space.n
+agent = PolicyGradientAgent(state_size, action_size)
+result = agent.train(env, episodes=1000)
+```
+
