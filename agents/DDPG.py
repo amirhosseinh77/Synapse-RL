@@ -52,12 +52,13 @@ class ReplayBuffer():
     
     
 class DDPGAgent():
-    def __init__(self, state_size, action_size, hidden_dim=128, gamma=0.99, epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.998, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
+    def __init__(self, state_size, action_size, action_max, hidden_dim=128, gamma=0.99, epsilon_min=0.1, epsilon_decay=0.998, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
-        self.epsilon = epsilon
+        self.action_max = action_max
+        self.epsilon = action_max
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.lr = lr
@@ -77,7 +78,7 @@ class DDPGAgent():
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=self.lr, weight_decay=1e-4)
 
     def select_action(self, state):
-        action = self.target_actor(torch.tensor(state).to(self.device))
+        action = self.target_actor(torch.tensor(state).to(self.device))*self.action_max
         return action + torch.randn(self.action_size)*self.epsilon
 
     def learn(self):
