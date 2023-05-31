@@ -79,7 +79,7 @@ class DDPGAgent():
 
     def select_action(self, state):
         action = self.target_actor(torch.tensor(state).to(self.device))*self.action_max
-        return action + torch.randn(self.action_size)*self.epsilon
+        return action + torch.randn(self.action_size).to(self.device)*self.epsilon
 
     def learn(self):
         if len(self.memory) < self.batch_size:
