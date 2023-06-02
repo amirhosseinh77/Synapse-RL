@@ -10,9 +10,10 @@ from utils.plot import plot_return
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class SACAgent():
-    def __init__(self, state_size, action_size, action_max, hidden_dim=128, gamma=0.99, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
+    def __init__(self, state_size, action_size, action_max, hidden_dim=128, alpha=0.1, gamma=0.99, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
         self.state_size = state_size
         self.action_size = action_size
+        self.alpha = alpha
         self.gamma = gamma
         self.lr = lr
         self.tau = tau
@@ -48,9 +49,8 @@ class SACAgent():
         dones = torch.tensor(dones).unsqueeze(-1).to(device)
         
         # Compute Value Targets
-        alpha = 0.1
         state_values = self.valueNet(states)
-        value_targets = torch.min(self.QNet1(states, actions), self.QNet2(states, actions)) - alpha*action_log_probs
+        value_targets = torch.min(self.QNet1(states, actions), self.QNet2(states, actions)) - self.alpha*action_log_probs
         value_loss = F.mse_loss(state_values, value_targets.detach())
         
         # Update Value network
@@ -76,7 +76,7 @@ class SACAgent():
         
         # Compute actor loss
         actions, action_log_probs = self.actor.select_action(states)
-        actor_loss = -(self.QNet1(states, actions) - alpha*action_log_probs).mean()
+        actor_loss = -(self.QNet1(states, actions) - self.alpha*action_log_probs).mean()
         
         # Update actor network
         self.actor_optimizer.zero_grad()
