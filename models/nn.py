@@ -2,30 +2,36 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 # Deterministic Policy Network architucture
 class DeterministicPolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim):
+    def __init__(self, state_dim, action_dim, hidden_dim, action_max):
         super().__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, action_dim)
-    
+        self.action_dim = action_dim
+        self.action_max = action_max
+        self.uncertainty = action_max
+
     def forward(self, state):
         x = F.relu(self.fc1(state))
         action = F.tanh(self.fc2(x))
         return action
     
     def select_action(self, state):
-        action = self.target_actor(torch.tensor(state).to(self.device))*self.action_max
-        return action + torch.randn(self.action_size).to(self.device)*self.epsilon
+        action = self(torch.tensor(state).to(device))*self.action_max
+        return action + torch.randn(self.action_dim).to(device)*self.uncertainty
 
 
 # Guassian Policy Network architucture
 class GuassianPolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim):
+    def __init__(self, state_dim, action_dim, hidden_dim, action_max):
         super().__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc_mean = nn.Linear(hidden_dim, action_dim)
         self.fc_std = nn.Linear(hidden_dim, action_dim)
+        self.action_max = action_max
 
     def forward(self, state):
         x = F.relu(self.fc1(state))
@@ -35,12 +41,11 @@ class GuassianPolicyNetwork(nn.Module):
         return action_mean, action_std
 
     def select_action(self, state):
-        state = torch.tensor(state)
-        mean, std = self.actor(state)
+        mean, std = self(torch.tensor(state).to(device))
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
-        action = torch.tanh(action)
+        action = torch.tanh(action)*self.action_max
         return action, log_prob
 
 
