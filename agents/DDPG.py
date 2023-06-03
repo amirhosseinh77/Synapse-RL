@@ -39,7 +39,7 @@ class DDPGAgent():
         
         # Convert data to PyTorch tensors
         states = torch.tensor(np.array(states)).to(device)
-        actions = torch.stack(actions).to(device)
+        actions = torch.tensor(actions).unsqueeze(-1).to(device)
         rewards = torch.tensor(rewards).unsqueeze(-1).to(device)
         next_states = torch.tensor(np.array(next_states)).to(device)
         dones = torch.tensor(dones).unsqueeze(-1).to(device)
