@@ -43,7 +43,7 @@ class SACAgent():
         # Convert data to PyTorch tensors
         states = torch.tensor(np.array(states)).to(device)
         actions = torch.tensor(actions).unsqueeze(-1).to(device)
-        action_log_probs = torch.stack(action_log_probs).to(device)
+        action_log_probs = torch.tensor(action_log_probs).unsqueeze(-1).to(device)
         rewards = torch.tensor(rewards).unsqueeze(-1).to(device)
         next_states = torch.tensor(np.array(next_states)).to(device)
         dones = torch.tensor(dones).unsqueeze(-1).to(device)
