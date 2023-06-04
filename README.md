@@ -22,6 +22,7 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 | `Actor Critic (A2C)` | Discrete |
 | `DDGP` | Continuous |
 | `SAC` | Continuous |
+| `PPO` | - |
 
 ### Inference
 ```python
