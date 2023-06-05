@@ -48,7 +48,7 @@ class DQNAgent():
         q_targets = rewards + (self.gamma * max_q_values_next * torch.logical_not(dones))
         
         # Compute Q-Learning loss and update the network parameters
-        loss = F.mse_loss(action_q_values, q_targets.detach())
+        loss = F.mse_loss(action_q_values, q_targets)
         
         self.optimizer.zero_grad()
         loss.backward()
