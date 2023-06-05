@@ -93,3 +93,24 @@ class QNetwork(nn.Module):
         x = F.relu(self.fc1(x))
         q_value = self.fc2(x)
         return q_value
+    
+
+# Deep Q-Network architecture (DQN)
+class DQNetwork(nn.Module):
+    def __init__(self, state_dim, action_dim, hidden_dim, epsilon):
+        super().__init__()
+        self.fc1 = nn.Linear(state_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, action_dim)
+        self.action_dim = action_dim
+        self.epsilon = epsilon
+
+    def forward(self, state):
+        x = F.relu(self.fc1(state))
+        q_values = self.fc2(x)
+        return q_values
+    
+    def select_action(self, state):
+        if  torch.rand(1) <= self.epsilon:
+            return torch.randint(self.action_dim, (1,))
+        q_values = self(torch.tensor(state).to(device))
+        return torch.argmax(q_values)
