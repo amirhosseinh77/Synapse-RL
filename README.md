@@ -20,9 +20,9 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 | `Deep Q Learing` | Discrete |
 | `Policy Gradient` | Discrete |
 | `Actor Critic (A2C)` | Discrete |
-| `DDGP` | Continuous |
-| `SAC` | Continuous |
-| `PPO` | - |
+| `Deep Deterministic Policy Gradient (DDGP)` | Continuous |
+| `Soft Actor Critic (SAC)` | Continuous |
+| `Proximal Policy Optimization (PPO)` | - |
 
 ### Inference
 ```python
