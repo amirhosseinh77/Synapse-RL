@@ -38,14 +38,16 @@ class DQNAgent():
         next_states = torch.tensor(np.array(next_states)).to(device)
         dones = torch.tensor(dones).unsqueeze(-1).to(device)
         
-        # Compute Q-Learning targets
+        # Compute action Q values 
+        q_values = self.q_network(states)
+        action_q_values = torch.gather(q_values, 1, actions)
+
+        # Compute Q targets
         q_values_next = self.target_network(next_states)
         max_q_values_next = torch.max(q_values_next, dim=1)[0].unsqueeze(-1)
         q_targets = rewards + (self.gamma * max_q_values_next * torch.logical_not(dones))
         
         # Compute Q-Learning loss and update the network parameters
-        q_values = self.q_network(states)
-        action_q_values = torch.gather(q_values, 1, actions)
         loss = F.mse_loss(action_q_values, q_targets.detach())
         
         self.optimizer.zero_grad()
