@@ -38,6 +38,5 @@ result = agent.train(env, episodes=1000)
 ```
 
 ### Citation
-[![DOI](https://zenodo.org/badge/569241846.svg)](https://zenodo.org/badge/latestdoi/569241846)
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8010048.svg)](https://doi.org/10.5281/zenodo.8010048)
 
