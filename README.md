@@ -37,3 +37,7 @@ agent = PolicyGradientAgent(state_size, action_size)
 result = agent.train(env, episodes=1000)
 ```
 
+### Citation
+[![DOI](https://zenodo.org/badge/569241846.svg)](https://zenodo.org/badge/latestdoi/569241846)
+
+
