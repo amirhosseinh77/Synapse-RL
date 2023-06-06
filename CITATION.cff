@@ -1,0 +1,15 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Synapse RL
+message: PyTorch framework for reinforcement learning
+type: software
+authors:
+  - given-names: Amirhossein
+    family-names: Heydarian Ardakani
+    email: amirhossein261077@live.com
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.8009955
+repository-code: 'https://github.com/amirhosseinh77/Synapse-RL'
