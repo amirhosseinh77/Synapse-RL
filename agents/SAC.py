@@ -38,15 +38,14 @@ class SACAgent():
         if len(self.memory) < self.batch_size:
             return
         
-        states, actions, action_log_probs, rewards, next_states, dones = self.memory.sample(self.batch_size)
+        states, actions, action_log_probs, rewards, next_states = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
-        states = torch.tensor(np.array(states)).to(device)
-        actions = torch.tensor(actions).unsqueeze(-1).to(device)
-        action_log_probs = torch.tensor(action_log_probs).unsqueeze(-1).to(device)
-        rewards = torch.tensor(rewards).unsqueeze(-1).to(device)
-        next_states = torch.tensor(np.array(next_states)).to(device)
-        dones = torch.tensor(dones).unsqueeze(-1).to(device)
+        states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
+        actions = torch.tensor(actions, dtype=torch.float32).unsqueeze(-1).to(device)
+        action_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).unsqueeze(-1).to(device)
+        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1).to(device)
+        next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
         
         # Compute Value Targets
         state_values = self.valueNet(states)
@@ -98,7 +97,7 @@ class SACAgent():
             while not done:
                 action, action_log_prob = self.actor.select_action(state)
                 next_state, reward, done, info = env.step([action.item()])
-                self.memory.push([state, action, action_log_prob, reward, next_state, done])
+                self.memory.push([state, action, action_log_prob, reward, next_state])
                 self.learn()
                 score += reward
                 state = next_state

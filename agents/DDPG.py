@@ -38,10 +38,10 @@ class DDPGAgent():
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
-        states = torch.tensor(np.array(states)).to(device)
-        actions = torch.tensor(actions).unsqueeze(-1).to(device)
-        rewards = torch.tensor(rewards).unsqueeze(-1).to(device)
-        next_states = torch.tensor(np.array(next_states)).to(device)
+        states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
+        actions = torch.tensor(actions, dtype=torch.float32).unsqueeze(-1).to(device)
+        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1).to(device)
+        next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
         dones = torch.tensor(dones).unsqueeze(-1).to(device)
 
         # Compute Q-Learning targets
