@@ -13,3 +13,4 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.8009955
 repository-code: 'https://github.com/amirhosseinh77/Synapse-RL'
+date-released: '2022-11-22'
