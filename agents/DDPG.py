@@ -75,8 +75,7 @@ class DDPGAgent():
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
     
     def decay_epsilon(self):
-        if self.actor.uncertainty > self.min_uncertainty:
-            self.actor.uncertainty *= self.uncertainty_decay
+        self.actor.uncertainty[self.actor.uncertainty > self.min_uncertainty] *= self.uncertainty_decay
 
     def train(self, env, episodes):
         returns = []
