@@ -25,6 +25,7 @@ class PolicyGradientAgent():
         rewards = torch.tensor(rewards).to(device)
 
         discounted_returns = compute_rewards_to_go(rewards, gamma)
+        discounted_returns = (discounted_returns - discounted_returns.mean()) / (discounted_returns.std() + 1e-6)
 
         # Calculate the loss 
         policy_loss = -(action_log_probs * discounted_returns).sum()
