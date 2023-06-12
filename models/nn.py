@@ -22,7 +22,7 @@ class DeterministicPolicyNetwork(nn.Module):
     
     def select_action(self, state):
         if isinstance(state, np.ndarray):
-            state = torch.tensor(state)
+            state = torch.tensor(state, dtype=torch.float32)
         action = self(state.to(device))*self.action_max
         return action + torch.randn(self.action_dim).to(device)*self.uncertainty
 
@@ -45,7 +45,7 @@ class GuassianPolicyNetwork(nn.Module):
 
     def select_action(self, state):
         if isinstance(state, np.ndarray):
-            state = torch.tensor(state)
+            state = torch.tensor(state, dtype=torch.float32)
         mean, std = self(state.to(device))
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
@@ -68,7 +68,7 @@ class CategoricalPolicyNetwork(nn.Module):
     
     def select_action(self, state):
         if isinstance(state, np.ndarray):
-            state = torch.tensor(state)
+            state = torch.tensor(state, dtype=torch.float32)
         probs = self(state.to(device))
         dist = torch.distributions.Categorical(probs)
         action = dist.sample()
