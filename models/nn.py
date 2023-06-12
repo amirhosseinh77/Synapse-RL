@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -20,7 +21,9 @@ class DeterministicPolicyNetwork(nn.Module):
         return action
     
     def select_action(self, state):
-        action = self(torch.tensor(state).to(device))*self.action_max
+        if isinstance(state, np.ndarray):
+            state = torch.tensor(state)
+        action = self(state.to(device))*self.action_max
         return action + torch.randn(self.action_dim).to(device)*self.uncertainty
 
 
@@ -41,7 +44,9 @@ class GuassianPolicyNetwork(nn.Module):
         return action_mean, action_std
 
     def select_action(self, state):
-        mean, std = self(torch.tensor(state).to(device))
+        if isinstance(state, np.ndarray):
+            state = torch.tensor(state)
+        mean, std = self(state.to(device))
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
@@ -62,7 +67,9 @@ class CategoricalPolicyNetwork(nn.Module):
         return F.softmax(logits, dim=-1)
     
     def select_action(self, state):
-        probs = self(torch.tensor(state).to(device))
+        if isinstance(state, np.ndarray):
+            state = torch.tensor(state)
+        probs = self(state.to(device))
         dist = torch.distributions.Categorical(probs)
         action = dist.sample()
         return action, dist.log_prob(action)
