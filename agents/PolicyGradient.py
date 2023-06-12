@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 from models.nn import CategoricalPolicyNetwork
+from utils.asset import compute_rewards_to_go
 from utils.plot import plot_return
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -23,9 +24,7 @@ class PolicyGradientAgent():
         action_log_probs = torch.stack(action_log_probs).to(device)
         rewards = torch.tensor(rewards).to(device)
 
-        discounts = torch.pow(gamma, torch.linspace(0, len(rewards)-1, len(rewards))).to(device)
-        discounted_rewards = torch.mul(reversed(discounts).unsqueeze(-1), rewards)
-        discounted_returns = torch.flip(torch.cumsum(reversed(discounted_rewards), dim=0), [0])
+        discounted_returns = compute_rewards_to_go(rewards)
 
         # Calculate the loss 
         policy_loss = -(action_log_probs * discounted_returns).sum()
