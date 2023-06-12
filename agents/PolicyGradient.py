@@ -24,11 +24,11 @@ class PolicyGradientAgent():
         rewards = torch.tensor(rewards).to(device)
 
         discounts = torch.pow(gamma, torch.linspace(0, len(rewards)-1, len(rewards))).to(device)
-        discounted_rewards = torch.flip(torch.cumsum(rewards, dim=0), [0])
-        returns = torch.mul(discounts, discounted_rewards)
+        discounted_rewards = torch.mul(reversed(discounts).unsqueeze(-1), rewards)
+        discounted_returns = torch.flip(torch.cumsum(reversed(discounted_rewards), dim=0), [0])
 
         # Calculate the loss 
-        policy_loss = -(action_log_probs * returns).sum()
+        policy_loss = -(action_log_probs * discounted_returns).sum()
         self.optimizer.zero_grad()
         policy_loss.backward()
 
