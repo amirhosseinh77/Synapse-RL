@@ -50,7 +50,7 @@ class GuassianPolicyNetwork(nn.Module):
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
-        action = torch.clamp(action, min=-self.action_max, max=self.action_max)
+        action = torch.clamp(action, min=-self.action_max, max=self.action_max) # finds the distribution then clamps it
         return action, log_prob
 
 
