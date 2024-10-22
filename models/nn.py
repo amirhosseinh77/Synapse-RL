@@ -38,7 +38,7 @@ class GuassianPolicyNetwork(nn.Module):
 
     def forward(self, state):
         x = F.relu(self.fc1(state))
-        action_mean = F.tanh(self.fc_mean(x))
+        action_mean = F.relu(self.fc_mean(x))
         action_std = torch.clamp(self.fc_std(x), min=-20, max=2)
         action_std = torch.exp(action_std)
         return action_mean, action_std
@@ -50,7 +50,7 @@ class GuassianPolicyNetwork(nn.Module):
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
-        action = torch.clip(action, -self.action_max, self.action_max)
+        action = torch.clamp(action, min=-self.action_max, max=self.action_max)
         return action, log_prob
 
 
