@@ -5,7 +5,7 @@ import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Deterministic Policy Network architucture
+# Deterministic Policy Network architecture
 class DeterministicPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim, action_max):
         super().__init__()
@@ -27,7 +27,7 @@ class DeterministicPolicyNetwork(nn.Module):
         return action + torch.randn(self.action_dim).to(device)*self.uncertainty
 
 
-# Guassian Policy Network architucture
+# Guassian Policy Network architecture
 class GuassianPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim, action_max):
         super().__init__()
@@ -50,11 +50,11 @@ class GuassianPolicyNetwork(nn.Module):
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
-        action = torch.tanh(action)*self.action_max
+        action = torch.clip(action, -self.action_max, self.action_max)
         return action, log_prob
 
 
-# Categorical Policy Network architucture
+# Categorical Policy Network architecture
 class CategoricalPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim):
         super().__init__()
@@ -75,7 +75,7 @@ class CategoricalPolicyNetwork(nn.Module):
         return action, dist.log_prob(action)
 
 
-# Value Network architucture
+# Value Network architecture
 class ValueNetwork(nn.Module):
     def __init__(self, state_dim, hidden_dim):
         super().__init__()
