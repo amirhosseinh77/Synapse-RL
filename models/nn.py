@@ -32,14 +32,12 @@ class GuassianPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim, action_max):
         super().__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc_mean = nn.Linear(hidden_dim, action_dim)
         self.fc_std = nn.Linear(hidden_dim, action_dim)
         self.action_max = torch.tensor(action_max)
 
     def forward(self, state):
         x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
         action_mean = self.fc_mean(x)
         action_std = torch.clamp(self.fc_std(x), min=-20, max=2)
         action_std = torch.exp(action_std)
