@@ -116,7 +116,11 @@ class SACAgent():
                 action, action_log_prob = self.actor.select_action(state)
                 mapped_action = self.map_to_range(action.cpu().detach().numpy())
                 next_state, reward, done, _, info = env.step(mapped_action)
-                self.memory.push([state, action, action_log_prob, reward, next_state])
+                self.memory.push([state, 
+                                  action.cpu().detach().numpy(), 
+                                  action_log_prob.cpu().detach().numpy(), 
+                                  reward, 
+                                  next_state])
                 self.learn()
                 score += reward
                 length += 1
