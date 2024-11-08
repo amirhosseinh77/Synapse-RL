@@ -28,7 +28,7 @@ class DeterministicPolicyNetwork(nn.Module):
     
 # Gaussian Policy Network architecture
 class GuassianPolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dims, action_max):
+    def __init__(self, state_dim, action_dim, hidden_dims):
         super().__init__()
         # Build hidden layers from the list of hidden dimensions
         layers = []
@@ -42,8 +42,6 @@ class GuassianPolicyNetwork(nn.Module):
         # Output layers for mean and standard deviation
         self.fc_mean = nn.Linear(input_dim, action_dim)
         self.fc_std = nn.Linear(input_dim, action_dim)
-
-        self.action_max = torch.tensor(action_max).to(device)
 
     def forward(self, state):
         x = self.hidden_layers(state)

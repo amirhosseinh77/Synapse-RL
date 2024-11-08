@@ -11,9 +11,10 @@ from utils.logger import TensorboardWriter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class SACAgent():
-    def __init__(self, state_size, action_size, action_max, hidden_dim=[128], alpha=0.1, gamma=0.99, lr=3e-4, tau=0.001, buffer_size=1e5, batch_size=256):
+    def __init__(self, state_size, action_size, action_range, hidden_dim=[128], alpha=0.1, gamma=0.99, lr=3e-4, tau=0.001, buffer_size=1e5, batch_size=256):
         self.state_size = state_size
         self.action_size = action_size
+        self.action_range = action_range
         self.alpha = alpha
         self.gamma = gamma
         self.lr = lr
@@ -21,7 +22,7 @@ class SACAgent():
         self.batch_size = batch_size
         self.memory = ReplayBuffer(int(buffer_size))
         # actor
-        self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim, action_max).to(device)
+        self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         # critic (state value)
         self.valueNet = ValueNetwork(state_size, hidden_dim).to(device)
         self.target_valueNet = ValueNetwork(state_size, hidden_dim).to(device)
@@ -99,6 +100,11 @@ class SACAgent():
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
         
 
+    def map_to_range(self, action):
+        min_val, max_val = self.action_range
+        mapped_action = ((action + 1) / 2) * (max_val - min_val) + min_val
+        return mapped_action
+
     def train(self, env, episodes):
         returns = []
         for episode in range(episodes):
@@ -108,7 +114,8 @@ class SACAgent():
             state, _ = env.reset()
             while not done:
                 action, action_log_prob = self.actor.select_action(state)
-                next_state, reward, done, _, info = env.step([action.item()])
+                mapped_action = self.map_to_range([action.item()])
+                next_state, reward, done, _, info = env.step(mapped_action)
                 self.memory.push([state, action, action_log_prob, reward, next_state])
                 self.learn()
                 score += reward
@@ -124,3 +131,4 @@ class SACAgent():
         env.close()
         self.writer.close()
         return returns
+    
