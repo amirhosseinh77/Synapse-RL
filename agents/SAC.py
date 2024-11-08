@@ -6,6 +6,7 @@ import numpy as np
 from models.nn import GuassianPolicyNetwork, ValueNetwork, QNetwork
 from utils.buffer import ReplayBuffer
 from utils.plot import plot_return
+from utils.logger import TensorboardWriter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -33,6 +34,8 @@ class SACAgent():
         self.valueNet_optimizer = optim.Adam(self.valueNet.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet1_optimizer = optim.Adam(self.QNet1.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet2_optimizer = optim.Adam(self.QNet2.parameters(), lr=self.lr, weight_decay=1e-4)
+        # log writer
+        self.writer = TensorboardWriter(log_dir="Logs/SAC", comment="SAC")
 
     def learn(self):
         if len(self.memory) < self.batch_size:
@@ -93,15 +96,19 @@ class SACAgent():
         for episode in range(episodes):
             score = 0
             done = False
-            state = env.reset()
+            state, _ = env.reset()
             while not done:
                 action, action_log_prob = self.actor.select_action(state)
-                next_state, reward, done, info = env.step([action.item()])
+                next_state, reward, done, _, info = env.step([action.item()])
                 self.memory.push([state, action, action_log_prob, reward, next_state])
                 self.learn()
                 score += reward
                 state = next_state
+
+            self.writer.log_scalar("Episode Return", score, episode)
             returns.append(score)
             plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
+
         env.close()
+        self.writer.close()
         return returns

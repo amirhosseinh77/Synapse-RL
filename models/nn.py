@@ -34,7 +34,7 @@ class GuassianPolicyNetwork(nn.Module):
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc_mean = nn.Linear(hidden_dim, action_dim)
         self.fc_std = nn.Linear(hidden_dim, action_dim)
-        self.action_max = torch.tensor(action_max)
+        self.action_max = torch.tensor(action_max).to(device)
 
     def forward(self, state):
         x = F.relu(self.fc1(state))
