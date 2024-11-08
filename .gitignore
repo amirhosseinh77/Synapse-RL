@@ -2,6 +2,7 @@
 __pycache__/
 development/
 **/.DS_Store
+**/Logs
 
 *.py[cod]
 *$py.class

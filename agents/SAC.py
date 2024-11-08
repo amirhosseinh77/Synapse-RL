@@ -36,6 +36,7 @@ class SACAgent():
         self.QNet2_optimizer = optim.Adam(self.QNet2.parameters(), lr=self.lr, weight_decay=1e-4)
         # log writer
         self.writer = TensorboardWriter(log_dir="Logs/SAC", comment="SAC")
+        self.iter = 0
 
     def learn(self):
         if len(self.memory) < self.batch_size:
@@ -84,6 +85,13 @@ class SACAgent():
         self.actor_optimizer.zero_grad()
         actor_loss.backward(retain_graph=True)
         self.actor_optimizer.step()
+
+        # write loss values
+        self.writer.log_scalar("Agent Loss/Actor Loss", actor_loss, self.iter)
+        self.writer.log_scalar("Agent Loss/Value Loss", value_loss, self.iter)
+        self.writer.log_scalar("Agent Loss/Q1 Loss", Q1_loss, self.iter)
+        self.writer.log_scalar("Agent Loss/Q2 Loss", Q2_loss, self.iter)
+        self.iter += 1
         
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′
@@ -95,6 +103,7 @@ class SACAgent():
         returns = []
         for episode in range(episodes):
             score = 0
+            length = 0
             done = False
             state, _ = env.reset()
             while not done:
@@ -103,9 +112,12 @@ class SACAgent():
                 self.memory.push([state, action, action_log_prob, reward, next_state])
                 self.learn()
                 score += reward
+                length += 1
                 state = next_state
 
-            self.writer.log_scalar("Episode Return", score, episode)
+            self.writer.log_scalar("Episode/Return", score, episode)
+            self.writer.log_scalar("Episode/Length", length, episode)
+
             returns.append(score)
             plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
 
