@@ -12,8 +12,8 @@ class DeterministicPolicyNetwork(nn.Module):
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, action_dim)
         self.action_dim = action_dim
-        self.action_max = torch.tensor(action_max)
-        self.uncertainty = torch.tensor(action_max)
+        self.action_max = torch.tensor(action_max).to(device)
+        self.uncertainty = torch.tensor(action_max).to(device)
 
     def forward(self, state):
         x = F.relu(self.fc1(state))
