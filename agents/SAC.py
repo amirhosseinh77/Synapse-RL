@@ -11,7 +11,7 @@ from utils.logger import TensorboardWriter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class SACAgent():
-    def __init__(self, state_size, action_size, action_max, hidden_dim=[128], alpha=0.1, gamma=0.99, lr=1e-3, tau=0.001, buffer_size=10000, batch_size=128):
+    def __init__(self, state_size, action_size, action_max, hidden_dim=[128], alpha=0.1, gamma=0.99, lr=3e-4, tau=0.001, buffer_size=1e5, batch_size=256):
         self.state_size = state_size
         self.action_size = action_size
         self.alpha = alpha
@@ -19,7 +19,7 @@ class SACAgent():
         self.lr = lr
         self.tau = tau
         self.batch_size = batch_size
-        self.memory = ReplayBuffer(buffer_size)
+        self.memory = ReplayBuffer(int(buffer_size))
         # actor
         self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim, action_max).to(device)
         # critic (state value)

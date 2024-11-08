@@ -24,6 +24,10 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 | `Soft Actor Critic (SAC)` | Continuous |
 | `Proximal Policy Optimization (PPO)` | - |
 
+### Tensorboard
+Synapse now supports tensorboard (only on SAC!).
+
+
 ### Inference
 ```python
 import gym
