@@ -25,20 +25,29 @@ class DeterministicPolicyNetwork(nn.Module):
             state = torch.tensor(state, dtype=torch.float32)
         action = self(state.to(device))*self.action_max
         return action + torch.randn(self.action_dim).to(device)*self.uncertainty
-
-
-# Guassian Policy Network architecture
+    
+# Gaussian Policy Network architecture
 class GuassianPolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim, action_max):
+    def __init__(self, state_dim, action_dim, hidden_dims, action_max):
         super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc_mean = nn.Linear(hidden_dim, action_dim)
-        self.fc_std = nn.Linear(hidden_dim, action_dim)
+        # Build hidden layers from the list of hidden dimensions
+        layers = []
+        input_dim = state_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            input_dim = hidden_dim
+        self.hidden_layers = nn.Sequential(*layers)
+
+        # Output layers for mean and standard deviation
+        self.fc_mean = nn.Linear(input_dim, action_dim)
+        self.fc_std = nn.Linear(input_dim, action_dim)
+
         self.action_max = torch.tensor(action_max).to(device)
 
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        action_mean = torch.tanh(self.fc_mean(x))*self.action_max
+        x = self.hidden_layers(state)
+        action_mean = torch.tanh(self.fc_mean(x))
         action_std = torch.clamp(self.fc_std(x), min=-20, max=2)
         action_std = torch.exp(action_std)
         return action_mean, action_std
@@ -50,7 +59,7 @@ class GuassianPolicyNetwork(nn.Module):
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
-        action = torch.clamp(action, min=-self.action_max, max=self.action_max)
+        action = torch.clamp(action, min=-1, max=1)
         return action, log_prob
 
 
@@ -77,28 +86,46 @@ class CategoricalPolicyNetwork(nn.Module):
 
 # Value Network architecture
 class ValueNetwork(nn.Module):
-    def __init__(self, state_dim, hidden_dim):
+    def __init__(self, state_dim, hidden_dims):
         super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        # Build hidden layers from the list of hidden dimensions
+        layers = []
+        input_dim = state_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            input_dim = hidden_dim
+        self.hidden_layers = nn.Sequential(*layers)
+        
+        # Output layer for the value
+        self.fc_out = nn.Linear(input_dim, 1)
     
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        value = self.fc2(x)
+        x = self.hidden_layers(state)
+        value = self.fc_out(x)
         return value
 
 
 # Q-Network architecture
 class QNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim):
+    def __init__(self, state_dim, action_dim, hidden_dims):
         super().__init__()
-        self.fc1 = nn.Linear(state_dim + action_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        # Build hidden layers from the list of hidden dimensions
+        layers = []
+        input_dim = state_dim + action_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            input_dim = hidden_dim
+        self.hidden_layers = nn.Sequential(*layers)
+        
+        # Output layer for Q-value
+        self.fc_out = nn.Linear(input_dim, 1)
 
     def forward(self, state, action):
         x = torch.cat([state, action], dim=-1)
-        x = F.relu(self.fc1(x))
-        q_value = self.fc2(x)
+        x = self.hidden_layers(x)
+        q_value = self.fc_out(x)
         return q_value
     
 
