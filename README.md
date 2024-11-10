@@ -30,7 +30,7 @@ Synapse now supports tensorboard (only on SAC!).
 
 ### Inference
 ```python
-import gym
+import gymnasium as gym
 from agents.PolicyGradient import PolicyGradientAgent
 
 # Initialize the CartPole environment and agent

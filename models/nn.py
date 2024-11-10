@@ -66,7 +66,7 @@ class GuassianPolicyNetwork(nn.Module):
         # Squash actions to [-1, 1] with tanh
         action = torch.tanh(action)
         # adjust log_prob for squashing
-        log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1).reshape(-1,1)
+        log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1, keepdim=True)
         return action, log_prob
 
 

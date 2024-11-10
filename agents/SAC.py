@@ -46,11 +46,11 @@ class SACAgent():
         states, actions, action_log_probs, rewards, next_states = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
-        states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
+        states = torch.tensor(states, dtype=torch.float32).to(device)
         actions = torch.tensor(actions, dtype=torch.float32).to(device)
         action_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
-        next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
+        next_states = torch.tensor(next_states, dtype=torch.float32).to(device)
         
         # Compute Value Targets
         state_values = self.valueNet(states)
@@ -88,10 +88,10 @@ class SACAgent():
         self.actor_optimizer.step()
 
         # write loss values
-        self.writer.log_scalar("Agent Loss/Actor Loss", actor_loss, self.iter)
-        self.writer.log_scalar("Agent Loss/Value Loss", value_loss, self.iter)
-        self.writer.log_scalar("Agent Loss/Q1 Loss", Q1_loss, self.iter)
-        self.writer.log_scalar("Agent Loss/Q2 Loss", Q2_loss, self.iter)
+        self.writer.log_scalar("Loss/Actor", actor_loss, self.iter)
+        self.writer.log_scalar("Loss/Value", value_loss, self.iter)
+        self.writer.log_scalar("Loss/Q1", Q1_loss, self.iter)
+        self.writer.log_scalar("Loss/Q2", Q2_loss, self.iter)
         self.iter += 1
         
         # Soft update of the target network's weights
@@ -113,8 +113,8 @@ class SACAgent():
                 # select action
                 action_t, action_log_prob_t = self.actor.select_action(state_t)
                 # convert to numpy
-                action = self.np_to_torch(action_t)
-                action_log_prob = self.np_to_torch(action_log_prob_t)
+                action = self.torch_to_np(action_t)
+                action_log_prob = self.torch_to_np(action_log_prob_t)
                 # map action to range
                 mapped_action = self.map_to_range(action)
                 # take action
@@ -123,16 +123,15 @@ class SACAgent():
                 self.memory.push([state, action, action_log_prob, reward, next_state])
                 # train agent
                 self.learn()
+                state = next_state
                 score += reward
                 length += 1
-                state = next_state
-
-            # store episode return
-            returns.append(score)
             # log episode info
             self.writer.log_scalar("Episode/Return", score, episode)
             self.writer.log_scalar("Episode/Length", length, episode)
-            # plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
+            # store episode return
+            returns.append(score)
+            plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
         env.close()
         self.writer.close()
         return returns
@@ -144,7 +143,7 @@ class SACAgent():
         return mapped_action
     
     def np_to_torch(self, x):
-        return torch.tensor(x, dtype=torch.float32).to(device)
+        return torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)
     
-    def torch_to_numpy(self, x):
-        return x.cpu().detach().numpy().ravel()
+    def torch_to_np(self, x):
+        return x.squeeze(0).cpu().detach().numpy().ravel()
