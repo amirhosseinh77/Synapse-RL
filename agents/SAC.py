@@ -47,9 +47,9 @@ class SACAgent():
         
         # Convert data to PyTorch tensors
         states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
-        actions = torch.tensor(actions, dtype=torch.float32).unsqueeze(-1).to(device)
-        action_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).unsqueeze(-1).to(device)
-        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1).to(device)
+        actions = torch.tensor(actions, dtype=torch.float32).to(device)
+        action_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).to(device)
+        rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
         next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
         
         # Compute Value Targets
@@ -100,11 +100,6 @@ class SACAgent():
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
         
 
-    def map_to_range(self, action):
-        min_val, max_val = self.action_range
-        mapped_action = ((action + 1) / 2) * (max_val - min_val) + min_val
-        return mapped_action
-
     def train(self, env, episodes):
         returns = []
         for episode in range(episodes):
@@ -113,26 +108,43 @@ class SACAgent():
             done = False
             state, _ = env.reset()
             while not done:
-                action, action_log_prob = self.actor.select_action(state)
-                mapped_action = self.map_to_range(action.cpu().detach().numpy())
+                # convert to tensor
+                state_t = self.np_to_torch(state)
+                # select action
+                action_t, action_log_prob_t = self.actor.select_action(state_t)
+                # convert to numpy
+                action = self.np_to_torch(action_t)
+                action_log_prob = self.np_to_torch(action_log_prob_t)
+                # map action to range
+                mapped_action = self.map_to_range(action)
+                # take action
                 next_state, reward, done, _, info = env.step(mapped_action)
-                self.memory.push([state, 
-                                  action.cpu().detach().numpy(), 
-                                  action_log_prob.cpu().detach().numpy(), 
-                                  reward, 
-                                  next_state])
+                # store in memory
+                self.memory.push([state, action, action_log_prob, reward, next_state])
+                # train agent
                 self.learn()
                 score += reward
                 length += 1
                 state = next_state
 
+            # store episode return
+            returns.append(score)
+            # log episode info
             self.writer.log_scalar("Episode/Return", score, episode)
             self.writer.log_scalar("Episode/Length", length, episode)
-
-            returns.append(score)
-            plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
-
+            # plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
         env.close()
         self.writer.close()
         return returns
     
+
+    def map_to_range(self, action):
+        min_val, max_val = self.action_range
+        mapped_action = ((action + 1) / 2) * (max_val - min_val) + min_val
+        return mapped_action
+    
+    def np_to_torch(self, x):
+        return torch.tensor(x, dtype=torch.float32).to(device)
+    
+    def torch_to_numpy(self, x):
+        return x.cpu().detach().numpy().ravel()

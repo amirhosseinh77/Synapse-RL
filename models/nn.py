@@ -7,17 +7,25 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Deterministic Policy Network architecture
 class DeterministicPolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim, action_max):
+    def __init__(self, state_dim, action_dim, hidden_dims):
         super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, action_dim)
+        # Build hidden layers from the list of hidden dimensions
+        layers = []
+        input_dim = state_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            input_dim = hidden_dim
+        self.hidden_layers = nn.Sequential(*layers)
+
+        # Output layers for action
+        self.fc_out = nn.Linear(input_dim, action_dim)
+        self.uncertainty = torch.tensor(1).to(device)
         self.action_dim = action_dim
-        self.action_max = torch.tensor(action_max).to(device)
-        self.uncertainty = torch.tensor(action_max).to(device)
 
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        action = F.tanh(self.fc2(x))
+        x = self.hidden_layers(state)
+        action = F.tanh(self.fc_out(x))
         return action
     
     def select_action(self, state):
@@ -30,7 +38,7 @@ class DeterministicPolicyNetwork(nn.Module):
 class GuassianPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dims):
         super().__init__()
-        # Build hidden layers from the list of hidden dimensions
+        # Build hidden layers
         layers = []
         input_dim = state_dim
         for hidden_dim in hidden_dims:
@@ -38,26 +46,27 @@ class GuassianPolicyNetwork(nn.Module):
             layers.append(nn.ReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
-
+        
         # Output layers for mean and standard deviation
         self.fc_mean = nn.Linear(input_dim, action_dim)
-        self.fc_std = nn.Linear(input_dim, action_dim)
+        self.fc_log_std = nn.Linear(input_dim, action_dim)
 
     def forward(self, state):
         x = self.hidden_layers(state)
-        action_mean = torch.tanh(self.fc_mean(x))
-        action_std = torch.clamp(self.fc_std(x), min=-20, max=2)
-        action_std = torch.exp(action_std)
+        action_mean = self.fc_mean(x)
+        action_log_std = torch.clamp(self.fc_log_std(x), min=-20, max=2)
+        action_std = torch.exp(action_log_std)
         return action_mean, action_std
 
     def select_action(self, state):
-        if isinstance(state, np.ndarray):
-            state = torch.tensor(state, dtype=torch.float32)
-        mean, std = self(state.to(device))
+        mean, std = self(state)
         dist = torch.distributions.Normal(mean, std)
         action = dist.rsample()
         log_prob = dist.log_prob(action)
-        action = torch.clamp(action, min=-1, max=1)
+        # Squash actions to [-1, 1] with tanh
+        action = torch.tanh(action)
+        # adjust log_prob for squashing
+        log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1).reshape(-1,1)
         return action, log_prob
 
 
