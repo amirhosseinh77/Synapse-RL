@@ -109,7 +109,7 @@ class SACAgent():
             state, _ = env.reset()
             while not done:
                 # convert to tensor
-                state_t = np_to_torch(state)
+                state_t = np_to_torch(state).to(device)
                 # select action
                 action_t, action_log_prob_t = self.actor.select_action(state_t)
                 # convert to numpy

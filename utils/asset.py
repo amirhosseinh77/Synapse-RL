@@ -15,7 +15,7 @@ def map_to_range(action, range):
     return mapped_action
 
 def np_to_torch(x):
-    return torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)
+    return torch.tensor(x, dtype=torch.float32).unsqueeze(0)
 
 def torch_to_np(x):
     return x.squeeze(0).cpu().detach().numpy().ravel()
