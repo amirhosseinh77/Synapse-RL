@@ -20,7 +20,7 @@ class DeterministicPolicyNetwork(nn.Module):
 
         # Output layers for action
         self.fc_out = nn.Linear(input_dim, action_dim)
-        self.uncertainty = torch.tensor(1).to(device)
+        self.uncertainty = torch.ones(1).to(device)
         self.action_dim = action_dim
 
     def forward(self, state):
@@ -29,9 +29,7 @@ class DeterministicPolicyNetwork(nn.Module):
         return action
     
     def select_action(self, state):
-        if isinstance(state, np.ndarray):
-            state = torch.tensor(state, dtype=torch.float32)
-        action = self(state.to(device))*self.action_max
+        action = self(state)
         return action + torch.randn(self.action_dim).to(device)*self.uncertainty
     
 # Gaussian Policy Network architecture

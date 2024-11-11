@@ -1,9 +1,9 @@
 import torch
-import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 from models.nn import GuassianPolicyNetwork, ValueNetwork, QNetwork
+from utils.assets import map_to_range, np_to_torch, torch_to_np
 from utils.buffer import ReplayBuffer
 from utils.plot import plot_return
 from utils.logger import TensorboardWriter
@@ -21,7 +21,7 @@ class SACAgent():
         self.tau = tau
         self.batch_size = batch_size
         self.memory = ReplayBuffer(int(buffer_size))
-        # actor
+        # actor (policy)
         self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         # critic (state value)
         self.valueNet = ValueNetwork(state_size, hidden_dim).to(device)
@@ -109,14 +109,14 @@ class SACAgent():
             state, _ = env.reset()
             while not done:
                 # convert to tensor
-                state_t = self.np_to_torch(state)
+                state_t = np_to_torch(state)
                 # select action
                 action_t, action_log_prob_t = self.actor.select_action(state_t)
                 # convert to numpy
-                action = self.torch_to_np(action_t)
-                action_log_prob = self.torch_to_np(action_log_prob_t)
+                action = torch_to_np(action_t)
+                action_log_prob = torch_to_np(action_log_prob_t)
                 # map action to range
-                mapped_action = self.map_to_range(action)
+                mapped_action = map_to_range(action, self.action_range)
                 # take action
                 next_state, reward, done, _, info = env.step(mapped_action)
                 # store in memory
@@ -135,15 +135,3 @@ class SACAgent():
         env.close()
         self.writer.close()
         return returns
-    
-
-    def map_to_range(self, action):
-        min_val, max_val = self.action_range
-        mapped_action = ((action + 1) / 2) * (max_val - min_val) + min_val
-        return mapped_action
-    
-    def np_to_torch(self, x):
-        return torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)
-    
-    def torch_to_np(self, x):
-        return x.squeeze(0).cpu().detach().numpy().ravel()
