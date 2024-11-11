@@ -3,7 +3,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 from models.nn import GuassianPolicyNetwork, ValueNetwork, QNetwork
-from utils.assets import map_to_range, np_to_torch, torch_to_np
+from utils.asset import map_to_range, np_to_torch, torch_to_np
 from utils.buffer import ReplayBuffer
 from utils.plot import plot_return
 from utils.logger import TensorboardWriter
