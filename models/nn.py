@@ -25,7 +25,7 @@ class DeterministicPolicyNetwork(nn.Module):
 
     def forward(self, state):
         x = self.hidden_layers(state)
-        action = F.tanh(self.fc_out(x))
+        action = torch.tanh(self.fc_out(x))
         return action
     
     def select_action(self, state):

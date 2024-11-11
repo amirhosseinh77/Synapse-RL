@@ -18,10 +18,10 @@ class DDPGAgent():
         self.gamma = gamma
         self.lr = lr
         self.tau = tau
-        self.min_uncertainty = min_uncertainty
-        self.uncertainty_decay = uncertainty_decay
+        self.min_uncertainty = torch.tensor(min_uncertainty)
+        self.uncertainty_decay = torch.tensor(uncertainty_decay)
         self.batch_size = batch_size
-        self.memory = ReplayBuffer(buffer_size)
+        self.memory = ReplayBuffer(int(buffer_size))
         # actor (policy)
         self.actor = DeterministicPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         self.target_actor = DeterministicPolicyNetwork(state_size, action_size, hidden_dim).to(device)
@@ -87,7 +87,7 @@ class DDPGAgent():
     
     def decay_epsilon(self):
         # self.actor.uncertainty[self.actor.uncertainty > self.min_uncertainty] *= self.uncertainty_decay
-        self.actor.uncertainty = torch.minimum(self.actor.uncertainty*self.uncertainty_decay, self.actor.uncertainty)
+        self.actor.uncertainty = torch.minimum(self.actor.uncertainty*self.uncertainty_decay, self.min_uncertainty)
 
     def train(self, env, episodes):
         returns = []
