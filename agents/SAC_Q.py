@@ -38,7 +38,7 @@ class SACAgent():
         if len(self.memory) < self.batch_size:
             return
         
-        states, actions, action_log_probs, rewards, next_states = self.memory.sample(self.batch_size)
+        states, actions, action_log_probs, rewards, next_states, dones = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
