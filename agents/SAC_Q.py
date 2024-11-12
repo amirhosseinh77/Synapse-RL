@@ -71,7 +71,7 @@ class SACAgent():
         
         # Compute actor loss
         actions, action_log_probs = self.actor.select_action(states)
-        actor_loss = -(self.QNet1(states, actions) - self.alpha*action_log_probs).mean()
+        actor_loss = -(torch.min(self.QNet1(states, actions), self.QNet2(states, actions)) - self.alpha*action_log_probs).mean()
         
         # Update actor network
         self.actor_optimizer.zero_grad()
