@@ -23,11 +23,11 @@ class SACAgent():
         self.memory = ReplayBuffer(int(buffer_size))
         # actor (policy)
         self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
-        # critic (state-action value)
+        # critic 1 (state-action value)
         self.QNet1 = QNetwork(state_size, action_size, hidden_dim).to(device)
         self.target_QNet1 = QNetwork(state_size, action_size, hidden_dim).to(device)
         self.target_QNet1.load_state_dict(self.QNet1.state_dict())
-
+        # critic 2 (Q2)
         self.QNet2 = QNetwork(state_size, action_size, hidden_dim).to(device)
         self.target_QNet2 = QNetwork(state_size, action_size, hidden_dim).to(device)
         self.target_QNet2.load_state_dict(self.QNet2.state_dict())
@@ -36,7 +36,7 @@ class SACAgent():
         self.QNet1_optimizer = optim.Adam(self.QNet1.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet2_optimizer = optim.Adam(self.QNet2.parameters(), lr=self.lr, weight_decay=1e-4)
         # log writer
-        self.writer = TensorboardWriter(log_dir="Logs/SAC", comment="SAC")
+        self.writer = TensorboardWriter(log_dir="Logs/SAC_Q", comment="SAC_Q")
         self.iter = 0
 
     def learn(self):
@@ -54,8 +54,8 @@ class SACAgent():
         dones = torch.tensor(dones).to(device)
 
         # Compute Q-Learning targets
-        next_actions, _ = self.actor.select_action(next_states)
-        q_values_next = torch.min(self.target_QNet1(states, actions), self.target_QNet2(states, actions)) - self.alpha*action_log_probs
+        next_actions, next_action_log_probs = self.actor.select_action(next_states)
+        q_values_next = torch.min(self.target_QNet1(next_states, next_actions), self.target_QNet2(next_states, next_actions)) - self.alpha*next_action_log_probs
         q_targets = rewards + (self.gamma * q_values_next * torch.logical_not(dones))
         
         q1_values = self.QNet1(states, actions)
@@ -87,13 +87,11 @@ class SACAgent():
         
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′
-        # for target_param, param in zip(self.target_valueNet.parameters(), self.valueNet.parameters()):
-        #     target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
         for target_param, param in zip(self.target_QNet1.parameters(), self.QNet1.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+            target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
 
         for target_param, param in zip(self.target_QNet2.parameters(), self.QNet2.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+            target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
 
 
     def train(self, env, episodes):
