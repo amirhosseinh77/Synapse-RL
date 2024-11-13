@@ -25,7 +25,12 @@ class SACAgent():
         self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         # critic (state-action value)
         self.QNet1 = QNetwork(state_size, action_size, hidden_dim).to(device)
+        self.target_QNet1 = QNetwork(state_size, action_size, hidden_dim).to(device)
+        self.target_QNet1.load_state_dict(self.QNet1.state_dict())
+
         self.QNet2 = QNetwork(state_size, action_size, hidden_dim).to(device)
+        self.target_QNet2 = QNetwork(state_size, action_size, hidden_dim).to(device)
+        self.target_QNet2.load_state_dict(self.QNet2.state_dict())
         # optimizers
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet1_optimizer = optim.Adam(self.QNet1.parameters(), lr=self.lr, weight_decay=1e-4)
@@ -50,21 +55,17 @@ class SACAgent():
 
         # Compute Q-Learning targets
         next_actions, _ = self.actor.select_action(next_states)
-        q1_values_next = self.QNet1(next_states, next_actions)
-        q1_targets = rewards + (self.gamma * q1_values_next * torch.logical_not(dones))
-    
-        q2_values_next = self.QNet2(next_states, next_actions)
-        q2_targets = rewards + (self.gamma * q2_values_next * torch.logical_not(dones))
-
+        q_values_next = torch.min(self.target_QNet1(states, actions), self.target_QNet2(states, actions)) - self.alpha*action_log_probs
+        q_targets = rewards + (self.gamma * q_values_next * torch.logical_not(dones))
         
         q1_values = self.QNet1(states, actions)
-        Q1_loss = F.mse_loss(q1_values, q1_targets.detach())
+        Q1_loss = F.mse_loss(q1_values, q_targets.detach())
         self.QNet1_optimizer.zero_grad()
         Q1_loss.backward(retain_graph=True)
         self.QNet1_optimizer.step()
 
         q2_values = self.QNet2(states, actions)
-        Q2_loss = F.mse_loss(q2_values, q2_targets.detach())
+        Q2_loss = F.mse_loss(q2_values, q_targets.detach())
         self.QNet2_optimizer.zero_grad()
         Q2_loss.backward(retain_graph=True)
         self.QNet2_optimizer.step()
@@ -88,7 +89,12 @@ class SACAgent():
         # θ′ ← τ θ + (1 −τ )θ′
         # for target_param, param in zip(self.target_valueNet.parameters(), self.valueNet.parameters()):
         #     target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-        
+        for target_param, param in zip(self.target_QNet1.parameters(), self.QNet1.parameters()):
+            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
+        for target_param, param in zip(self.target_QNet2.parameters(), self.QNet2.parameters()):
+            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
 
     def train(self, env, episodes):
         returns = []
