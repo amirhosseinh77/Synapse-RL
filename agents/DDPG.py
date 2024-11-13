@@ -80,10 +80,10 @@ class DDPGAgent():
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′
         for target_param, param in zip(self.target_actor.parameters(), self.actor.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+            target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
         
         for target_param, param in zip(self.target_critic.parameters(), self.critic.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+            target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
     
     def decay_epsilon(self):
         # self.actor.uncertainty[self.actor.uncertainty > self.min_uncertainty] *= self.uncertainty_decay

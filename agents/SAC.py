@@ -97,7 +97,7 @@ class SACAgent():
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′
         for target_param, param in zip(self.target_valueNet.parameters(), self.valueNet.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+            target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
         
 
     def train(self, env, episodes):
