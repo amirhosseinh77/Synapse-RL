@@ -25,8 +25,10 @@ One of the advantages of using Synapse-RL is its compatibility with gym-based en
 | `Proximal Policy Optimization (PPO)` | - |
 
 ### Tensorboard
-Synapse now supports tensorboard (only on SAC!).
-
+Synapse now supports tensorboard.
+```bash
+tensorboard --logdir ./
+```
 
 ### Inference
 ```python
