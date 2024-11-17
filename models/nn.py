@@ -70,20 +70,27 @@ class GuassianPolicyNetwork(nn.Module):
 
 # Categorical Policy Network architecture
 class CategoricalPolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim):
+    def __init__(self, state_dim, action_dim, hidden_dims):
         super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, action_dim)
+        # Build hidden layers
+        layers = []
+        input_dim = state_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            input_dim = hidden_dim
+        self.hidden_layers = nn.Sequential(*layers)
     
+        # Output layers for mean and standard deviation
+        self.fc_out = nn.Linear(input_dim, action_dim)
+
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        logits = self.fc2(x)
+        x = self.hidden_layers(state)
+        logits = self.fc_out(x)
         return F.softmax(logits, dim=-1)
     
     def select_action(self, state):
-        if isinstance(state, np.ndarray):
-            state = torch.tensor(state, dtype=torch.float32)
-        probs = self(state.to(device))
+        probs = self(state)
         dist = torch.distributions.Categorical(probs)
         action = dist.sample()
         return action, dist.log_prob(action)

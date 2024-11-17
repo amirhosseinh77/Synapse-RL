@@ -40,7 +40,7 @@ env = gym.make('CartPole-v1')
 state_size = env.observation_space.shape[0]
 action_size = env.action_space.n
 agent = PolicyGradientAgent(state_size, action_size)
-result = agent.train(env, episodes=1000)
+result = agent.train(env, episodes=2000)
 ```
 
 ### Citation
