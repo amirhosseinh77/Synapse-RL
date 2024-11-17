@@ -136,20 +136,29 @@ class QNetwork(nn.Module):
 
 # Deep Q-Network architecture (DQN)
 class DQNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_dim, epsilon):
+    def __init__(self, state_dim, action_dim, hidden_dims, epsilon):
         super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, action_dim)
+        # Build hidden layers from the list of hidden dimensions
+        layers = []
+        input_dim = state_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            input_dim = hidden_dim
+        self.hidden_layers = nn.Sequential(*layers)
+
+        # Output layer for action
+        self.fc_out = nn.Linear(input_dim, action_dim)
         self.action_dim = action_dim
         self.epsilon = epsilon
 
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        q_values = self.fc2(x)
+        x = self.hidden_layers(state)
+        q_values = self.fc_out(x)
         return q_values
     
     def select_action(self, state):
         if  torch.rand(1) <= self.epsilon:
             return torch.randint(self.action_dim, (1,))
-        q_values = self(torch.tensor(state).to(device))
+        q_values = self(state)
         return torch.argmax(q_values)
