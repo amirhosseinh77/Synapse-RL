@@ -4,9 +4,9 @@ import torch.nn.functional as F
 import numpy as np
 from models.nn import GuassianPolicyNetwork, ValueNetwork
 from utils.asset import map_to_range, np_to_torch, torch_to_np
+from utils.asset import compute_rewards_to_go
 from utils.buffer import ReplayBuffer
 from utils.plot import plot_return
-from utils.asset import compute_rewards_to_go
 from utils.logger import TensorboardWriter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -38,7 +38,7 @@ class PPOAgent():
 
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
-        action_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).to(device)
+        action_log_probs = torch.stack(action_log_probs).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
         dones = torch.tensor(dones).to(device)
 
