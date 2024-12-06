@@ -97,13 +97,12 @@ class PPOAgent():
                 action_t, action_log_prob_t = self.new_policy.select_action(state_t)
                 # convert to numpy
                 action = torch_to_np(action_t)
-                action_log_prob = torch_to_np(action_log_prob_t)
                 # map action to range
                 mapped_action = map_to_range(action, self.action_range)
                 # take action
                 next_state, reward, done, _, info = env.step(mapped_action)
                 # store in memory
-                self.memory.push([state, action_log_prob, reward, done])
+                self.memory.push([state, action_log_prob_t, reward, done])
                 state = next_state
                 score += reward
                 length += 1
