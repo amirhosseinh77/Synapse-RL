@@ -32,6 +32,7 @@ class DeterministicPolicyNetwork(nn.Module):
         action = self(state)
         return action + torch.randn(self.action_dim).to(device)*self.uncertainty
     
+
 # Gaussian Policy Network architecture
 class GuassianPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dims):
@@ -59,16 +60,16 @@ class GuassianPolicyNetwork(nn.Module):
     def select_action(self, state, deterministic=False):
         mean, std = self(state)
         if deterministic: 
-            action = torch.tanh(mean)
-            log_prob = torch.ones_like(std)
+            action = mean
+            log_prob = torch.ones_like(std).sum(dim=-1, keepdim=True)
         else:
             dist = torch.distributions.Normal(mean, std)
             action = dist.rsample()
-            log_prob = dist.log_prob(action)
-            # Squash actions to [-1, 1] with tanh
-            action = torch.tanh(action)
+            log_prob = dist.log_prob(action).sum(dim=-1, keepdim=True)
             # adjust log_prob for squashing
             log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1, keepdim=True)
+        # Squash actions to [-1, 1] with tanh
+        action = torch.tanh(action)
         return action, log_prob
 
 
