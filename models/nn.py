@@ -63,7 +63,7 @@ class GaussianPolicyNetwork(nn.Module):
             action = torch.tanh(mean)  # Directly apply tanh for deterministic mode
             log_prob = torch.zeros_like(mean).sum(dim=-1, keepdim=True)
         else:
-            normal_dist = Normal(mean, std)
+            normal_dist = torch.distributions.Normal(mean, std)
             action_pre_tanh = normal_dist.rsample()  # Sample before applying tanh
             log_prob = normal_dist.log_prob(action_pre_tanh).sum(dim=-1, keepdim=True)
             
