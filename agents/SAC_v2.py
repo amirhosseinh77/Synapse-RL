@@ -23,27 +23,27 @@ class SACAgent():
         self.memory = ReplayBuffer(int(buffer_size))
         # actor (policy)
         self.actor = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
-        # critic 1 (state-action value)
+        # critic (state value)
+        self.valueNet = ValueNetwork(state_size, hidden_dim).to(device)
+        self.target_valueNet = ValueNetwork(state_size, hidden_dim).to(device)
+        self.target_valueNet.load_state_dict(self.valueNet.state_dict())
+        # critic (state-action value)
         self.QNet1 = QNetwork(state_size, action_size, hidden_dim).to(device)
-        self.target_QNet1 = QNetwork(state_size, action_size, hidden_dim).to(device)
-        self.target_QNet1.load_state_dict(self.QNet1.state_dict())
-        # critic 2 (Q2)
         self.QNet2 = QNetwork(state_size, action_size, hidden_dim).to(device)
-        self.target_QNet2 = QNetwork(state_size, action_size, hidden_dim).to(device)
-        self.target_QNet2.load_state_dict(self.QNet2.state_dict())
         # optimizers
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr, weight_decay=1e-4)
+        self.valueNet_optimizer = optim.Adam(self.valueNet.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet1_optimizer = optim.Adam(self.QNet1.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet2_optimizer = optim.Adam(self.QNet2.parameters(), lr=self.lr, weight_decay=1e-4)
         # log writer
-        self.writer = TensorboardWriter(log_dir="Logs/SAC_Q", comment="SAC_Q")
+        self.writer = TensorboardWriter(log_dir="Logs/SAC", comment="SAC")
         self.iter = 0
 
     def learn(self):
         if len(self.memory) < self.batch_size:
             return
         
-        states, actions, action_log_probs, rewards, next_states, dones = self.memory.sample(self.batch_size)
+        states, actions, action_log_probs, rewards, next_states = self.memory.sample(self.batch_size)
         
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
@@ -51,12 +51,20 @@ class SACAgent():
         action_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
         next_states = torch.tensor(next_states, dtype=torch.float32).to(device)
-        dones = torch.tensor(dones).to(device)
-
+        
+        # Compute Value Targets
+        state_values = self.valueNet(states)
+        value_targets = torch.min(self.QNet1(states, actions), self.QNet2(states, actions)) - self.alpha*action_log_probs
+        value_loss = F.mse_loss(state_values, value_targets.detach())
+        
+        # Update Value network
+        self.valueNet_optimizer.zero_grad()
+        value_loss.backward(retain_graph=True)
+        self.valueNet_optimizer.step()
+        
         # Compute Q-Learning targets
-        next_actions, next_action_log_probs = self.actor.select_action(next_states)
-        q_values_next = torch.min(self.target_QNet1(next_states, next_actions), self.target_QNet2(next_states, next_actions)) - self.alpha*next_action_log_probs
-        q_targets = rewards + (self.gamma * q_values_next * torch.logical_not(dones))
+        state_values_next = self.target_valueNet(next_states)
+        q_targets = rewards + (self.gamma * state_values_next)
         
         q1_values = self.QNet1(states, actions)
         Q1_loss = F.mse_loss(q1_values, q_targets.detach())
@@ -72,7 +80,7 @@ class SACAgent():
         
         # Compute actor loss
         actions, action_log_probs = self.actor.select_action(states)
-        actor_loss = -(torch.min(self.QNet1(states, actions), self.QNet2(states, actions)) - self.alpha*action_log_probs).mean()
+        actor_loss = -(self.QNet1(states, actions) - self.alpha*action_log_probs).mean()
         
         # Update actor network
         self.actor_optimizer.zero_grad()
@@ -81,18 +89,16 @@ class SACAgent():
 
         # write loss values
         self.writer.log_scalar("Loss/Actor", actor_loss, self.iter)
+        self.writer.log_scalar("Loss/Value", value_loss, self.iter)
         self.writer.log_scalar("Loss/Q1", Q1_loss, self.iter)
         self.writer.log_scalar("Loss/Q2", Q2_loss, self.iter)
         self.iter += 1
         
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′
-        for target_param, param in zip(self.target_QNet1.parameters(), self.QNet1.parameters()):
+        for target_param, param in zip(self.target_valueNet.parameters(), self.valueNet.parameters()):
             target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
-
-        for target_param, param in zip(self.target_QNet2.parameters(), self.QNet2.parameters()):
-            target_param.data.copy_(self.tau * target_param.data + (1-self.tau) * param.data)
-
+        
 
     def train(self, env, episodes):
         returns = []
@@ -114,7 +120,7 @@ class SACAgent():
                 # take action
                 next_state, reward, done, _, info = env.step(mapped_action)
                 # store in memory
-                self.memory.push([state, action, action_log_prob, reward, next_state,  done])
+                self.memory.push([state, action, action_log_prob, reward, next_state])
                 # train agent
                 self.learn()
                 state = next_state

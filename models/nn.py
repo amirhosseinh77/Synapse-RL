@@ -34,7 +34,7 @@ class DeterministicPolicyNetwork(nn.Module):
     
 
 # Gaussian Policy Network architecture
-class GuassianPolicyNetwork(nn.Module):
+class GaussianPolicyNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dims):
         super().__init__()
         # Build hidden layers
@@ -53,23 +53,24 @@ class GuassianPolicyNetwork(nn.Module):
     def forward(self, state):
         x = self.hidden_layers(state)
         action_mean = self.fc_mean(x)
-        action_log_std = torch.clamp(self.fc_log_std(x), min=-20, max=2)
+        action_log_std = torch.clamp(self.fc_log_std(x), min=-5, max=2)  # Adjusted range
         action_std = torch.exp(action_log_std)
         return action_mean, action_std
 
     def select_action(self, state, deterministic=False):
         mean, std = self(state)
         if deterministic: 
-            action = mean
-            log_prob = torch.ones_like(std).sum(dim=-1, keepdim=True)
+            action = torch.tanh(mean)  # Directly apply tanh for deterministic mode
+            log_prob = torch.zeros_like(mean).sum(dim=-1, keepdim=True)
         else:
-            dist = torch.distributions.Normal(mean, std)
-            action = dist.rsample()
-            log_prob = dist.log_prob(action).sum(dim=-1, keepdim=True)
-            # adjust log_prob for squashing
-            log_prob -= (2 * (np.log(2) - action - F.softplus(-2 * action))).sum(dim=-1, keepdim=True)
-        # Squash actions to [-1, 1] with tanh
-        action = torch.tanh(action)
+            normal_dist = Normal(mean, std)
+            action_pre_tanh = normal_dist.rsample()  # Sample before applying tanh
+            log_prob = normal_dist.log_prob(action_pre_tanh).sum(dim=-1, keepdim=True)
+            
+            # Apply tanh transformation correctly
+            action = torch.tanh(action_pre_tanh)
+            # Log probability correction for tanh squashing
+            log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1, keepdim=True)
         return action, log_prob
 
 
