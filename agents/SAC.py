@@ -170,7 +170,7 @@ class SACAgent():
             self.writer.log_scalar("Episode/Length", length, episode)
             # store episode return
             returns.append(score)
-            # plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
+            plot_return(returns, f'Soft Actor Critic (SAC) ({device})')
             # Evaluation
             if (episode + 1) % 20 == 0: self.evaluate(env)
         env.close()
