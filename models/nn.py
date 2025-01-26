@@ -14,7 +14,7 @@ class DeterministicPolicyNetwork(nn.Module):
         input_dim = state_dim
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.LeakyReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
 
@@ -42,7 +42,7 @@ class GaussianPolicyNetwork(nn.Module):
         input_dim = state_dim
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.LeakyReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
         
@@ -53,7 +53,7 @@ class GaussianPolicyNetwork(nn.Module):
     def forward(self, state):
         x = self.hidden_layers(state)
         action_mean = self.fc_mean(x)
-        action_log_std = torch.clamp(self.fc_log_std(x), min=-5, max=2)  # Adjusted range
+        action_log_std = torch.clamp(self.fc_log_std(x), min=-10, max=2)  # Adjusted range
         action_std = torch.exp(action_log_std)
         return action_mean, action_std
 
@@ -83,7 +83,7 @@ class CategoricalPolicyNetwork(nn.Module):
         input_dim = state_dim
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.LeakyReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
     
@@ -111,7 +111,7 @@ class ValueNetwork(nn.Module):
         input_dim = state_dim
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.LeakyReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
         
@@ -133,7 +133,7 @@ class QNetwork(nn.Module):
         input_dim = state_dim + action_dim
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.LeakyReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
         
@@ -156,7 +156,7 @@ class DQNetwork(nn.Module):
         input_dim = state_dim
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.LeakyReLU())
             input_dim = hidden_dim
         self.hidden_layers = nn.Sequential(*layers)
 
