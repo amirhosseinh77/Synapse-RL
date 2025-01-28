@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
-from models.nn import GuassianPolicyNetwork, ValueNetwork
+from models.nn import GaussianPolicyNetwork, ValueNetwork
 from utils.asset import map_to_range, np_to_torch, torch_to_np
 from utils.asset import compute_rewards_to_go
 from utils.buffer import ReplayBuffer
@@ -18,59 +18,68 @@ class PPOAgent():
         self.action_range = action_range
         self.gamma = gamma
         self.lr = lr
-        self.memory = ReplayBuffer(int(buffer_size))
+        self.buffer_size = int(buffer_size)
+        self.memory = ReplayBuffer(self.buffer_size)
         self.clip_ratio = 0.2
-        # actor (policy)
+
+        # Actor (policy)
         self.new_policy = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         self.old_policy = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         self.old_policy.load_state_dict(self.new_policy.state_dict())
-        # critic (state value)
+
+        # Critic (state value)
         self.value_network = ValueNetwork(state_size, hidden_dim).to(device)
-        # optimizers
+
+        # Optimizers
         self.policy_optimizer = optim.Adam(self.new_policy.parameters(), lr=self.lr, weight_decay=1e-4)
         self.value_optimizer = optim.Adam(self.value_network.parameters(), lr=self.lr, weight_decay=1e-4)
-        # log writer
+
+        # Log writer
         self.writer = TensorboardWriter(log_dir="Logs/PPO", comment="PPO")
         self.iter = 0
 
-    def learn(self, gamma=0.99):
+    def learn(self):
+        if len(self.memory) == 0:
+            return  # Avoid training if no data is available
+        
+        # Read from replay buffer
         states, action_log_probs, rewards, dones = zip(*self.memory.buffer)
 
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
         action_log_probs = torch.stack(action_log_probs).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
-        dones = torch.tensor(dones).to(device)
+        dones = torch.tensor(dones, dtype=torch.float32).to(device)
 
-        # sample from old policy
+        # Sample from old policy
         _, old_log_probs = self.old_policy.select_action(states)
 
         # Compute Value Targets
         discounted_returns = compute_rewards_to_go(rewards, gamma)
-        # discounted_returns = (discounted_returns - discounted_returns.mean()) / (discounted_returns.std() + 1e-6)
         state_values = self.value_network(states)
+
+        # Compute Advantage and Normalize
+        advantages = discounted_returns - state_values
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-6)
+
         # Compute Value Loss
         value_loss = F.mse_loss(discounted_returns, state_values)
 
-        # Update Value network
+        # Update Value Network
         self.value_optimizer.zero_grad()
         value_loss.backward()
         self.value_optimizer.step()
 
-
         # Compute Actor Loss
-        # _, action_log_probs = self.new_policy.select_action(states)
-
         ratios = torch.exp(action_log_probs - old_log_probs.detach())
-        advantages = discounted_returns-state_values
         surr1 = ratios * advantages.detach()
-        surr2 = torch.clamp(ratios, 1-self.clip_ratio, 1+self.clip_ratio) * advantages.detach()
-        policy_loss = -(torch.min(surr1, surr2)).mean()
+        surr2 = torch.clamp(ratios, 1 - self.clip_ratio, 1 + self.clip_ratio) * advantages.detach()
+        policy_loss = -torch.min(surr1, surr2).mean()
 
-        # Update old policy
+       # Update Old Policy
         self.old_policy.load_state_dict(self.new_policy.state_dict())
 
-        # Update actor network
+        # Update Actor Network
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
         self.policy_optimizer.step()
