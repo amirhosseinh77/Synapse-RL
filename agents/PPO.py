@@ -23,8 +23,8 @@ class PPOAgent():
         self.clip_ratio = 0.2
 
         # Actor (policy)
-        self.new_policy = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
-        self.old_policy = GuassianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
+        self.new_policy = GaussianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
+        self.old_policy = GaussianPolicyNetwork(state_size, action_size, hidden_dim).to(device)
         self.old_policy.load_state_dict(self.new_policy.state_dict())
 
         # Critic (state value)
@@ -45,6 +45,13 @@ class PPOAgent():
         # Read from replay buffer
         states, action_log_probs, rewards, dones = zip(*self.memory.buffer)
 
+        states = np.array(states)
+        rewards = np.array(rewards)
+        dones = np.array(dones)
+
+        states = states if states.ndim >= 2 else np.expand_dims(states, axis=-1)
+        rewards = rewards if rewards.ndim >= 2 else np.expand_dims(rewards, axis=-1)
+        dones = dones if dones.ndim >= 2 else np.expand_dims(dones, axis=-1)
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
         action_log_probs = torch.stack(action_log_probs).to(device)
@@ -55,7 +62,7 @@ class PPOAgent():
         _, old_log_probs = self.old_policy.select_action(states)
 
         # Compute Value Targets
-        discounted_returns = compute_rewards_to_go(rewards, gamma)
+        discounted_returns = compute_rewards_to_go(rewards, self.gamma)
         state_values = self.value_network(states)
 
         # Compute Advantage and Normalize
