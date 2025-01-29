@@ -43,23 +43,13 @@ class PPOAgent():
             return  # Avoid training if no data is available
         
         # Read from replay buffer
-        states, action_log_probs, rewards, dones = zip(*self.memory.buffer)
+        states, action_log_probs, rewards, dones = self.memory.sample(None, return_all=True)
 
-        states = np.array(states)
-        rewards = np.array(rewards)
-        dones = np.array(dones)
-
-        states = states if states.ndim >= 2 else np.expand_dims(states, axis=-1)
-        rewards = rewards if rewards.ndim >= 2 else np.expand_dims(rewards, axis=-1)
-        dones = dones if dones.ndim >= 2 else np.expand_dims(dones, axis=-1)
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
-        action_log_probs = torch.stack(action_log_probs).to(device)
+        old_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
         dones = torch.tensor(dones, dtype=torch.float32).to(device)
-
-        # Sample from old policy
-        _, old_log_probs = self.old_policy.select_action(states)
 
         # Compute Value Targets
         discounted_returns = compute_rewards_to_go(rewards, self.gamma)
@@ -77,19 +67,22 @@ class PPOAgent():
         value_loss.backward()
         self.value_optimizer.step()
 
+        # Sample from old policy
+        _, action_log_probs = self.new_policy.select_action(states)
+
         # Compute Actor Loss
         ratios = torch.exp(action_log_probs - old_log_probs.detach())
         surr1 = ratios * advantages.detach()
         surr2 = torch.clamp(ratios, 1 - self.clip_ratio, 1 + self.clip_ratio) * advantages.detach()
         policy_loss = -torch.min(surr1, surr2).mean()
 
-       # Update Old Policy
-        self.old_policy.load_state_dict(self.new_policy.state_dict())
-
         # Update Actor Network
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
         self.policy_optimizer.step()
+
+       # Update Old Policy
+        self.old_policy.load_state_dict(self.new_policy.state_dict())
 
         # write loss values
         self.writer.log_scalar("Loss/Policy", policy_loss, self.iter)
@@ -97,7 +90,7 @@ class PPOAgent():
         self.iter += 1
 
         # clear memory
-        self.memory = ReplayBuffer(int(self.buffer_size))
+        self.memory.clear()
 
     def train(self, env, episodes):
         returns = []
@@ -110,15 +103,16 @@ class PPOAgent():
                 # convert to tensor
                 state_t = np_to_torch(state).to(device)
                 # select action
-                action_t, action_log_prob_t = self.new_policy.select_action(state_t)
+                action_t, action_log_prob_t = self.old_policy.select_action(state_t)
                 # convert to numpy
                 action = torch_to_np(action_t)
+                action_log_prob = torch_to_np(action_log_prob_t)
                 # map action to range
                 mapped_action = map_to_range(action, self.action_range)
                 # take action
                 next_state, reward, done, _, info = env.step(mapped_action)
                 # store in memory
-                self.memory.push([state, action_log_prob_t, reward, done])
+                self.memory.push([state, action_log_prob, reward, done])
                 state = next_state
                 score += reward
                 length += 1
