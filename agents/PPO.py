@@ -43,11 +43,11 @@ class PPOAgent():
             return  # Avoid training if no data is available
         
         # Read from replay buffer
-        states, action_log_probs, rewards, dones = self.memory.sample(None, return_all=True)
+        states, old_log_probs, rewards, dones = self.memory.sample(None, return_all=True)
 
         # Convert data to PyTorch tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
-        old_log_probs = torch.tensor(action_log_probs, dtype=torch.float32).to(device)
+        old_log_probs = torch.tensor(old_log_probs, dtype=torch.float32).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
         dones = torch.tensor(dones, dtype=torch.float32).to(device)
 
@@ -67,15 +67,15 @@ class PPOAgent():
         value_loss.backward()
         self.value_optimizer.step()
 
-        # Sample from old policy
+        # Compute new log probs
         _, action_log_probs = self.new_policy.select_action(states)
-
-        # Compute Actor Loss
         ratios = torch.exp(action_log_probs - old_log_probs.detach())
+
+        # PPO Clipped Objective
         surr1 = ratios * advantages.detach()
         surr2 = torch.clamp(ratios, 1 - self.clip_ratio, 1 + self.clip_ratio) * advantages.detach()
         policy_loss = -torch.min(surr1, surr2).mean()
-
+        
         # Update Actor Network
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
