@@ -10,7 +10,7 @@ from utils.logger import TensorboardWriter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-class SACAgent():
+class SACAgent:
     def __init__(self, state_size, action_size, action_range, hidden_dim=[128], alpha=0.1, gamma=0.99, lr=3e-4, tau=0.005, buffer_size=1e5, batch_size=256):
         self.state_size = state_size
         self.action_size = action_size
@@ -36,7 +36,7 @@ class SACAgent():
         self.QNet1_optimizer = optim.Adam(self.QNet1.parameters(), lr=self.lr, weight_decay=1e-4)
         self.QNet2_optimizer = optim.Adam(self.QNet2.parameters(), lr=self.lr, weight_decay=1e-4)
         # log writer
-        self.writer = TensorboardWriter(log_dir="Logs/SAC", comment="SAC")
+        self.writer = TensorboardWriter(log_dir="Logs/SACv2", comment="SACv2")
         self.iter = 0
 
     def learn(self):
