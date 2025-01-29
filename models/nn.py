@@ -57,7 +57,7 @@ class GaussianPolicyNetwork(nn.Module):
         action_std = torch.exp(action_log_std)
         return action_mean, action_std
 
-    def select_action(self, state, deterministic=False):
+    def select_action(self, state, deterministic=False, return_entropy=False):
         mean, std = self(state)
         if deterministic: 
             action = torch.tanh(mean)  # Directly apply tanh for deterministic mode
@@ -71,6 +71,11 @@ class GaussianPolicyNetwork(nn.Module):
             action = torch.tanh(action_pre_tanh)
             # Log probability correction for tanh squashing
             log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1, keepdim=True)
+
+            if return_entropy:
+                entropy = normal_dist.entropy().sum(dim=-1, keepdim=True)
+                return action, log_prob, entropy
+                
         return action, log_prob
 
 

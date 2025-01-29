@@ -68,7 +68,7 @@ class PPOAgent():
         self.value_optimizer.step()
 
         # Compute new log probs
-        _, action_log_probs = self.new_policy.select_action(states)
+        _, action_log_probs, entropy = self.new_policy.select_action(states, return_entropy=True)
         ratios = torch.exp(action_log_probs - old_log_probs.detach())
 
         # PPO Clipped Objective
@@ -76,9 +76,14 @@ class PPOAgent():
         surr2 = torch.clamp(ratios, 1 - self.clip_ratio, 1 + self.clip_ratio) * advantages.detach()
         policy_loss = -torch.min(surr1, surr2).mean()
         
+        # Entropy regularization
+        entropy_coef = 0.01  # Adjust this value to control exploration
+        entropy_loss = -entropy.mean()  # We maximize entropy, so we take negative
+        total_policy_loss = policy_loss + entropy_coef * entropy_loss
+
         # Update Actor Network
         self.policy_optimizer.zero_grad()
-        policy_loss.backward()
+        total_policy_loss.backward()
         self.policy_optimizer.step()
 
        # Update Old Policy
@@ -86,6 +91,7 @@ class PPOAgent():
 
         # write loss values
         self.writer.log_scalar("Loss/Policy", policy_loss, self.iter)
+        self.writer.log_scalar("Loss/Entropy", entropy_loss, self.iter)
         self.writer.log_scalar("Loss/Value", value_loss, self.iter)
         self.iter += 1
 
