@@ -107,8 +107,8 @@ class SACAgent:
         self.writer.log_scalar("Loss/Actor", actor_loss, self.iter)
         self.writer.log_scalar("Loss/Q1", Q1_loss, self.iter)
         self.writer.log_scalar("Loss/Q2", Q2_loss, self.iter)
-        self.writer.log_scalar("Loss/Alpha", alpha_loss, self.iter)
-        self.writer.log_scalar("Param/Alpha", alpha, self.iter)
+        self.writer.log_scalar("Entropy/Alpha_Loss", alpha_loss, self.iter)
+        self.writer.log_scalar("Entropy/Alpha", alpha, self.iter)
         self.iter += 1
 
         # Soft update of target networks
